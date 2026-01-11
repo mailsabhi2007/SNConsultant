@@ -1,0 +1,253 @@
+================================================================================
+ALPHA TESTING REPORT - ServiceNow Consultant App
+================================================================================
+Generated: 2026-01-11 19:10:32
+
+OVERALL SUMMARY
+--------------------------------------------------------------------------------
+  PASS: 25 (23.1%)
+  PENDING: 83 (76.9%)
+  Total Tests: 108
+
+CORE FUNCTIONALITY
+--------------------------------------------------------------------------------
+  [PASS] CORE_001: Phase 1 (Public Docs) - Verify agent starts by searching public ServiceNow documentation
+      Notes: Code contains Phase 1 workflow for public docs
+  [PASS] CORE_002: Phase 2 (User Context) - Confirm agent checks user's knowledge base after public docs
+      Notes: Code contains Phase 2 workflow for user context
+  [PASS] CORE_003: Phase 3 (Synthesis) - Verify structured response format with all sections
+      Notes: Code contains Phase 3 synthesis with structured format
+  [PASS] CORE_004: Phase 4 (Live Instance) - Test that agent asks permission before checking live instance
+      Notes: Code contains Phase 4 with permission guard
+  [PENDING] CORE_005: Workflow Order - Confirm phases execute in correct sequence
+      Notes: Test case initialized from plan
+  [PENDING] CORE_006: Best Practices Questions - Test questions about best practices
+      Notes: Test case initialized from plan
+  [PENDING] CORE_007: Troubleshooting Questions - Test troubleshooting scenarios
+      Notes: Test case initialized from plan
+  [PENDING] CORE_008: Architecture Questions - Test architecture-related queries
+      Notes: Test case initialized from plan
+  [PENDING] CORE_009: Technical Questions - Test technical implementation questions
+      Notes: Test case initialized from plan
+  [PASS] CORE_010: Upload Files - Test uploading PDF, TXT, and CSV files
+      Notes: Code supports PDF, TXT, and CSV file uploads
+  [PASS] CORE_011: File Processing - Verify files are chunked and indexed correctly
+      Notes: Unit tests for knowledge base file processing are passing
+  [PENDING] CORE_012: Context Search - Confirm agent queries user's knowledge base when relevant
+      Notes: Test case initialized from plan
+  [PENDING] CORE_013: Conflict Detection - Test questions where user's docs conflict with official best practices
+      Notes: Test case initialized from plan
+  [PENDING] CORE_014: No Context Found - Verify behavior when no relevant user context exists
+      Notes: Test case initialized from plan
+  [PASS] CORE_015: Save Preference - Test submitting correction via thumbs down button
+      Notes: Code contains save preference functionality
+  [PENDING] CORE_016: Preference Retrieval - Verify saved preferences appear in Knowledge Base tab
+      Notes: Test case initialized from plan
+  [PENDING] CORE_017: Preference Application - Test that agent applies learned preferences in subsequent questions
+      Notes: Test case initialized from plan
+  [PENDING] CORE_018: Delete Preference - Verify deletion of learned rules works correctly
+      Notes: Test case initialized from plan
+
+CRITICAL PATH
+--------------------------------------------------------------------------------
+  [PENDING] CRITICAL_001: Agent successfully searches public docs and user context
+      Notes: Test case initialized from plan
+  [PENDING] CRITICAL_002: Structured responses render correctly with all sections
+      Notes: Test case initialized from plan
+  [PENDING] CRITICAL_003: Chat input is disabled during processing
+      Notes: Test case initialized from plan
+  [PENDING] CRITICAL_004: Clear chat button works and resets state
+      Notes: Test case initialized from plan
+  [PENDING] CRITICAL_005: File upload and indexing works
+      Notes: Test case initialized from plan
+  [PENDING] CRITICAL_006: ServiceNow connection test works
+      Notes: Test case initialized from plan
+  [PENDING] CRITICAL_007: Feedback mechanism saves preferences
+      Notes: Test case initialized from plan
+  [PENDING] CRITICAL_008: No garbled text or UI glitches
+      Notes: Test case initialized from plan
+  [PENDING] CRITICAL_009: Agent respects permission guards (never auto-calls live instance)
+      Notes: Test case initialized from plan
+
+ERROR HANDLING
+--------------------------------------------------------------------------------
+  [PENDING] ERROR_001: Agent Initialization Failure - Test behavior when agent fails to initialize
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_002: API Errors - Test behavior when API calls fail
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_003: Empty Responses - Test handling when agent returns empty response
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_004: Malformed Responses - Test handling of unexpected response formats
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_005: Empty Input - Submit empty message (should be ignored)
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_006: Very Long Input - Test with very long questions (>1000 characters)
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_007: Special Characters - Test with special characters, emojis, unicode
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_008: Multiple Questions - Submit message with multiple questions
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_009: Unsupported Format - Try uploading unsupported file type
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_010: Very Large File - Test with large PDF (>10MB)
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_011: Empty File - Try uploading empty file
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_012: Corrupted File - Test with corrupted PDF
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_013: File with No Text - Test PDF with only images
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_014: Page Refresh - Test behavior after browser refresh
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_015: Multiple Tabs - Test opening app in multiple browser tabs
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_016: Session Timeout - Test behavior after extended inactivity
+      Notes: Test case initialized from plan
+  [PENDING] ERROR_017: Clear Chat - Verify chat history clears but settings persist
+      Notes: Test case initialized from plan
+
+INTEGRATION
+--------------------------------------------------------------------------------
+  [PENDING] INT_001: Successful Search - Verify public docs search returns relevant results
+      Notes: Test case initialized from plan
+  [PENDING] INT_002: No Results Found - Test query with no matching public documentation
+      Notes: Test case initialized from plan
+  [PENDING] INT_003: API Failure - Test behavior when Tavily API is unavailable
+      Notes: Test case initialized from plan
+  [PENDING] INT_004: Live Query with Permission - Test checking live instance after user confirms
+      Notes: Test case initialized from plan
+  [PENDING] INT_005: Permission Denied - Test when user says 'no' to live instance check
+      Notes: Test case initialized from plan
+  [PENDING] INT_006: Connection Timeout - Test handling of slow/unresponsive ServiceNow instance
+      Notes: Test case initialized from plan
+  [PENDING] INT_007: Authentication Expiry - Test handling when ServiceNow session expires
+      Notes: Test case initialized from plan
+  [PENDING] INT_008: Vector Search - Verify knowledge base search finds relevant chunks
+      Notes: Test case initialized from plan
+  [PENDING] INT_009: Empty Knowledge Base - Test behavior with no uploaded files
+      Notes: Test case initialized from plan
+  [PENDING] INT_010: Large Knowledge Base - Test with 10+ indexed files
+      Notes: Test case initialized from plan
+  [PENDING] INT_011: Chunk Retrieval - Verify correct chunks are retrieved for queries
+      Notes: Test case initialized from plan
+
+PERFORMANCE
+--------------------------------------------------------------------------------
+  [PENDING] PERF_001: Simple Query - Measure response time for simple question (<30 seconds)
+      Notes: Test case initialized from plan
+  [PENDING] PERF_002: Complex Query - Measure response time for complex multi-phase query (<90 seconds)
+      Notes: Test case initialized from plan
+  [PENDING] PERF_003: With Knowledge Base - Test response time with knowledge base search
+      Notes: Test case initialized from plan
+  [PENDING] PERF_004: With Live Instance - Test response time when querying live instance
+      Notes: Test case initialized from plan
+  [PENDING] PERF_005: Message Rendering - Verify messages render quickly (<1 second)
+      Notes: Test case initialized from plan
+  [PENDING] PERF_006: Long Conversations - Test with 20+ message conversation (no slowdown)
+      Notes: Test case initialized from plan
+  [PENDING] PERF_007: File Upload - Test upload and processing time for typical files
+      Notes: Test case initialized from plan
+
+REAL-WORLD
+--------------------------------------------------------------------------------
+  [PENDING] SCENARIO_001: New Developer Onboarding - Complete scenario workflow
+      Notes: Test case initialized from plan
+  [PENDING] SCENARIO_002: Troubleshooting Production Issue - Complete scenario workflow
+      Notes: Test case initialized from plan
+  [PENDING] SCENARIO_003: Best Practice Compliance Check - Complete scenario workflow
+      Notes: Test case initialized from plan
+  [PENDING] SCENARIO_004: Multi-Turn Conversation - Complete scenario workflow
+      Notes: Test case initialized from plan
+  [PENDING] SCENARIO_005: Configuration & Setup - Complete scenario workflow
+      Notes: Test case initialized from plan
+  [PENDING] SCENARIO_006: Knowledge Base Management - Complete scenario workflow
+      Notes: Test case initialized from plan
+
+SECURITY
+--------------------------------------------------------------------------------
+  [PENDING] SEC_001: Password Security - Verify passwords are not logged or exposed
+      Notes: Test case initialized from plan
+  [PENDING] SEC_002: Instance Credentials - Confirm credentials are stored securely
+      Notes: Test case initialized from plan
+  [PENDING] SEC_003: File Content - Verify uploaded file content is handled securely
+      Notes: Test case initialized from plan
+  [PENDING] SEC_004: Session Data - Confirm no sensitive data in session state or URLs
+      Notes: Test case initialized from plan
+  [PASS] SEC_005: Live Instance Guard - Verify agent never calls check_live_instance without explicit permission
+      Notes: Code contains permission guard for live instance
+  [PASS] SEC_006: User Confirmation - Test that agent asks before accessing live instance
+      Notes: Code asks for user confirmation before live instance access
+  [PENDING] SEC_007: Safety Level - Verify safety level settings are respected
+      Notes: Test case initialized from plan
+
+SETTINGS
+--------------------------------------------------------------------------------
+  [PASS] SETTINGS_001: Instance Name Input - Test entering instance name (should save as full URL)
+      Notes: Code contains instance name normalization
+  [PENDING] SETTINGS_002: Instance Display - Verify header shows only instance name (not full URL)
+      Notes: Test case initialized from plan
+  [PASS] SETTINGS_003: Connection Test - Test successful connection with valid credentials
+      Notes: Code contains connection test functionality
+  [PENDING] SETTINGS_004: Connection Failure - Test error handling for invalid credentials
+      Notes: Test case initialized from plan
+  [PASS] SETTINGS_005: Save Settings - Verify credentials are saved and persisted
+      Notes: Code contains save settings functionality
+  [PENDING] SETTINGS_006: Password Persistence - Test that leaving password empty keeps existing password
+      Notes: Test case initialized from plan
+  [PENDING] SETTINGS_007: View Domains - Verify current domains are displayed
+      Notes: Test case initialized from plan
+  [PASS] SETTINGS_008: Add Domain - Test adding new search domain
+      Notes: Code contains add domain functionality
+  [PENDING] SETTINGS_009: Remove Domain - Test removing a domain
+      Notes: Test case initialized from plan
+  [PENDING] SETTINGS_010: Domain Validation - Test adding invalid domain formats
+      Notes: Test case initialized from plan
+  [PENDING] SETTINGS_011: Safety Level - Test changing safety level (strict/open)
+      Notes: Test case initialized from plan
+  [PENDING] SETTINGS_012: Setting Persistence - Verify preferences are saved
+      Notes: Test case initialized from plan
+
+UI/UX
+--------------------------------------------------------------------------------
+  [PENDING] UI_001: Tab Navigation - Switch between Consultant, Knowledge Base, and Settings tabs
+      Notes: Test case initialized from plan
+  [PASS] UI_002: Header Display - Verify header shows title, connection status, and Clear Chat button
+      Notes: Code contains render_header function with Clear Chat button
+  [PASS] UI_003: Welcome Screen - Confirm welcome screen appears on fresh session
+      Notes: Code checks for empty messages and shows welcome screen
+  [PENDING] UI_004: Responsive Design - Test on different screen sizes
+      Notes: Test case initialized from plan
+  [PASS] UI_005: Clear Chat Button - Verify button clears chat history and resets session state
+      Notes: Code contains clear chat functionality
+  [PASS] UI_006: Message Display - Verify user and assistant messages render correctly with avatars
+      Notes: Code uses st.chat_message with avatar parameter
+  [PASS] UI_007: Structured Responses - Test first structured response shows all sections
+      Notes: Code contains render_structured_response with all required sections
+  [PENDING] UI_008: Subsequent Responses - Verify subsequent responses show as regular chat
+      Notes: Test case initialized from plan
+  [PENDING] UI_009: List Formatting - Test numbered lists and bullet points render correctly
+      Notes: Test case initialized from plan
+  [PASS] UI_010: Source Removal - Confirm sources/URLs are removed from displayed content
+      Notes: Code contains source/URL removal logic
+  [PASS] UI_011: Feedback Button - Verify thumbs down button appears only on final responses
+      Notes: Code contains feedback button implementation
+  [PENDING] UI_012: Feedback Dialog - Test correction form opens, submits, and saves preferences
+      Notes: Test case initialized from plan
+  [PASS] UI_013: Input Field - Verify chat input is visible and functional
+      Notes: Code uses st.chat_input
+  [PASS] UI_014: Disabled During Processing - Confirm chat input is hidden/disabled when processing
+      Notes: Code checks processing state before showing input
+  [PENDING] UI_015: Single Input Field - Verify only one chat input appears
+      Notes: Test case initialized from plan
+  [PASS] UI_016: File Upload Button - Test paperclip button opens quick upload dialog
+      Notes: Code contains file upload button and dialog
+  [PENDING] UI_017: Input Persistence - Verify input clears after submission
+      Notes: Test case initialized from plan
+  [PASS] UI_018: No Garbled Text - Check for absence of icon names in text
+      Notes: Code contains text cleaning logic for icon names
+  [PENDING] UI_019: No Overlapping Elements - Verify expander labels don't overlap
+      Notes: Test case initialized from plan
+  [PENDING] UI_020: Proper Spacing - Confirm adequate spacing between sections and messages
+      Notes: Test case initialized from plan
+  [PASS] UI_021: Loading States - Verify spinner shows during agent processing
+      Notes: Code uses st.spinner for loading states

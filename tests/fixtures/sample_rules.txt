@@ -1,0 +1,4 @@
+INTERNAL POLICY: All Business Rules must start with prefix ACME_
+INTERNAL POLICY: All Script Includes must follow naming convention: ACME_<Module>_<Function>
+INTERNAL POLICY: Custom tables must use prefix: u_acme_
+INTERNAL POLICY: All workflows must be approved by architecture team before deployment

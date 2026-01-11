@@ -1,0 +1,22 @@
+[
+  {
+    "content": "INTERNAL POLICY: All Business Rules must start with prefix ACME_",
+    "source": "legacy_rules.txt",
+    "metadata": {
+      "source_type": "user_context",
+      "source": "legacy_rules.txt",
+      "file_path": "/path/to/legacy_rules.txt"
+    },
+    "score": 0.88
+  },
+  {
+    "content": "INTERNAL POLICY: Custom tables must use prefix: u_acme_",
+    "source": "legacy_rules.txt",
+    "metadata": {
+      "source_type": "user_context",
+      "source": "legacy_rules.txt",
+      "file_path": "/path/to/legacy_rules.txt"
+    },
+    "score": 0.85
+  }
+]

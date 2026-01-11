@@ -1,0 +1,16 @@
+{
+  "results": [
+    {
+      "title": "ServiceNow Documentation - Incident Management",
+      "url": "https://docs.servicenow.com/bundle/tokyo-it-service-management/page/product/incident-management/concept/c_IncidentManagement.html",
+      "content": "Incident Management is a process for managing the lifecycle of incidents. An incident is an unplanned interruption to an IT service or reduction in the quality of an IT service.",
+      "score": 0.95
+    },
+    {
+      "title": "ServiceNow Best Practices - Business Rules",
+      "url": "https://docs.servicenow.com/bundle/tokyo-platform-administration/page/administer/business-rules/concept/business-rules.html",
+      "content": "Business Rules are server-side scripts that execute when a record is displayed, inserted, updated, or deleted. Best practice: Avoid using current.update() in Business Rules.",
+      "score": 0.92
+    }
+  ]
+}

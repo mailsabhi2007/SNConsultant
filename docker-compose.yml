@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  servicenow-consultant:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - SN_INSTANCE=${SN_INSTANCE:-}
+      - SN_USER=${SN_USER:-}
+      - SN_PASSWORD=${SN_PASSWORD:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-sonnet-4-20250514}
+    volumes:
+      - ./chroma_db:/app/chroma_db
+      - ./user_context_data:/app/user_context_data
+      - ./config.json:/app/config.json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.docker.compose.service=servicenow-consultant"
+      - "description=ServiceNow Consultant AI Assistant"

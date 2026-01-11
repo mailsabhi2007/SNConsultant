@@ -1,0 +1,22 @@
+{
+  "result": [
+    {
+      "sys_id": "1234567890abcdef1234567890abcdef",
+      "number": "INC0010001",
+      "short_description": "Test Incident",
+      "state": "1",
+      "priority": "3",
+      "sys_created_on": "2024-01-01 12:00:00",
+      "sys_created_by": "admin"
+    },
+    {
+      "sys_id": "0987654321fedcba0987654321fedcba",
+      "number": "INC0010002",
+      "short_description": "Another Test Incident",
+      "state": "2",
+      "priority": "2",
+      "sys_created_on": "2024-01-02 10:30:00",
+      "sys_created_by": "user1"
+    }
+  ]
+}

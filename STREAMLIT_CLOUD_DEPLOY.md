@@ -173,10 +173,16 @@ To update your deployed app:
 1. **Check `requirements.txt`:**
    - All dependencies listed?
    - Version conflicts?
+   - Test packages removed? (Use `requirements-dev.txt` for local dev)
 
 2. **Check Python version:**
    - Streamlit Cloud uses Python 3.11 by default
    - Ensure your code is compatible
+
+3. **Package loading issues:**
+   - See `STREAMLIT_PACKAGE_TROUBLESHOOTING.md` for detailed fixes
+   - Common: Remove test packages from `requirements.txt`
+   - Pin versions if conflicts occur
 
 ### App is Slow
 

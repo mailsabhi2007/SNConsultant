@@ -1,21 +1,32 @@
+# Core dependencies
 httpx>=0.25.0
 python-dotenv>=1.0.0
+
+# LangChain ecosystem
 langchain-core>=0.1.0
 langchain-anthropic>=0.1.0
 langgraph>=0.0.20
 langchain-community>=0.0.20
 langchain-openai>=0.1.0
-langchain-chroma>=0.1.0
+langchain-chroma>=0.4.0
+
+# Vector database
 chromadb>=0.4.0
+
+# Document processing
 pypdf>=3.0.0
 beautifulsoup4>=4.12.0
+langchain-text-splitters>=0.2.0
+
+# Search API
 tavily-python>=0.3.0
 langchain-tavily>=0.1.0
+
+# Streamlit and UI
 streamlit>=1.28.0
 streamlit-shadcn-ui>=0.1.0
 streamlit-option-menu>=0.3.0
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-mock>=3.11.0
-pytest-cov>=4.1.0
-responses>=0.23.0
+
+# Note: Testing packages removed for production deployment
+# If you need them for local development, install separately:
+# pip install pytest pytest-asyncio pytest-mock pytest-cov responses

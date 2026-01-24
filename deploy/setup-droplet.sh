@@ -14,7 +14,7 @@ apt update && apt upgrade -y
 
 # Install dependencies
 echo "[2/8] Installing dependencies..."
-apt install -y python3.11 python3.11-venv python3-pip nodejs npm nginx git curl
+apt install -y python3 python3-venv python3-pip nodejs npm nginx git curl
 
 # Install Node.js 18+ (if default is older)
 echo "[3/8] Setting up Node.js..."

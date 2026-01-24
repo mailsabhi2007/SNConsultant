@@ -1,20 +1,61 @@
 """LangChain tools for ServiceNow operations."""
 
-from typing import Optional
+import os
+from typing import Optional, Dict
 from langchain_core.tools import tool
 from servicenow_client import ServiceNowClient
+from user_config import get_user_config
 
 
-# Global client instance (will be initialized)
-_client: Optional[ServiceNowClient] = None
+# Cache for user-specific clients
+_user_clients: Dict[str, ServiceNowClient] = {}
 
 
-def get_client() -> ServiceNowClient:
-    """Get or create ServiceNow client instance."""
-    global _client
-    if _client is None:
-        _client = ServiceNowClient()
-    return _client
+def get_client(user_id: Optional[str] = None) -> ServiceNowClient:
+    """
+    Get or create ServiceNow client instance.
+
+    Args:
+        user_id: Optional user ID to get user-specific credentials
+
+    Returns:
+        ServiceNowClient instance
+    """
+    global _user_clients
+
+    # Try to get user-specific credentials first
+    instance = None
+    username = None
+    password = None
+
+    if user_id:
+        instance = get_user_config(user_id, "servicenow", "instance_url")
+        username = get_user_config(user_id, "servicenow", "username")
+        password = get_user_config(user_id, "servicenow", "password")
+
+    # Fall back to environment variables if not set in user config
+    instance = instance or os.getenv("SN_INSTANCE")
+    username = username or os.getenv("SN_USER")
+    password = password or os.getenv("SN_PASSWORD")
+
+    # Create cache key
+    cache_key = f"{user_id or 'default'}:{instance}:{username}"
+
+    # Return cached client if available and credentials haven't changed
+    if cache_key in _user_clients:
+        return _user_clients[cache_key]
+
+    # Create new client
+    client = ServiceNowClient(
+        instance=instance,
+        username=username,
+        password=password
+    )
+
+    # Cache the client
+    _user_clients[cache_key] = client
+
+    return client
 
 
 @tool

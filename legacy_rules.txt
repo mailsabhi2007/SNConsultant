@@ -1,1 +1,0 @@
-INTERNAL POLICY: All Business Rules must start with prefix ACME_

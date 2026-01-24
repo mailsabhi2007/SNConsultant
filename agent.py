@@ -1,7 +1,7 @@
 """LangGraph ReAct agent for ServiceNow consulting."""
 
-from typing import Annotated, Sequence, TypedDict, Optional
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from typing import Annotated, Sequence, TypedDict, Optional, Dict, Any
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import tool
 from langgraph.graph import StateGraph, END
@@ -11,11 +11,22 @@ from tools import fetch_recent_changes, check_table_schema, get_error_logs, save
 from servicenow_client import ServiceNowClient
 from knowledge_base import query_knowledge_base
 from servicenow_tools import get_public_knowledge_tool
+from user_config import get_system_config
+from semantic_cache import check_cache, store_cache
+from llm_judge import get_judge
+from history_manager import (
+    create_conversation, add_message, get_conversation_messages,
+    get_conversation, update_conversation_title, generate_conversation_title
+)
 
 
 # Define the agent state as TypedDict
 class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
+    user_id: Optional[str]  # User ID for user-specific features
+    conversation_id: Optional[int]  # Current conversation ID
+    is_cached: Optional[bool]  # Flag indicating if response came from cache
+    judge_result: Optional[Dict[str, Any]]  # LLM judge evaluation result
 
 
 @tool
@@ -104,25 +115,35 @@ async def check_live_instance(query: str, table_name: Optional[str] = None, days
 class ServiceNowAgent:
     """ServiceNow consulting agent using LangGraph."""
     
-    def __init__(self):
-        """Initialize the agent."""
+    def __init__(self, user_id: Optional[str] = None):
+        """
+        Initialize the agent.
+        
+        Args:
+            user_id: Optional user ID for user-specific features (cache, history, config)
+        """
         import os
-        # Check if API key is set
-        if not os.getenv("ANTHROPIC_API_KEY"):
+        
+        # Try to get API key from system config first, fallback to env var
+        api_key = get_system_config("anthropic_api_key") or os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
             raise ValueError(
-                "ANTHROPIC_API_KEY environment variable is not set. "
-                "Please add it to your .env file."
+                "ANTHROPIC_API_KEY not found in system config or environment variables. "
+                "Please configure it in system settings or .env file."
             )
         
-        # Initialize Claude model
-        # Using Claude Sonnet 4 as specified
-        # You can override by setting ANTHROPIC_MODEL in .env
-        model_name = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+        # Set API key in environment for LangChain
+        os.environ["ANTHROPIC_API_KEY"] = api_key
         
+        # Get model name from system config or env var
+        model_name = get_system_config("anthropic_model") or os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+        
+        self.user_id = user_id
         self.model = ChatAnthropic(
             model=model_name,
             temperature=0,
         )
+        self.model_name = model_name
         
         # System prompt
         self.system_prompt = (
@@ -207,10 +228,45 @@ class ServiceNowAgent:
         # State is passed as a dict in LangGraph
         messages = list(state["messages"])
         
+        # Get the last user message to check cache
+        user_message = None
+        for msg in reversed(messages):
+            if isinstance(msg, HumanMessage):
+                user_message = msg.content
+                break
+        
+        # Check semantic cache if we have a user message and user_id
+        # Get user_id from state if available, otherwise use self.user_id
+        effective_user_id = state.get("user_id") if isinstance(state, dict) else None
+        if not effective_user_id:
+            effective_user_id = self.user_id
+        
+        cached_response = None
+        if user_message and effective_user_id:
+            # Use lower threshold for exact matches (0.75) but still check for high similarity
+            # First try exact match threshold (0.95), then fall back to semantic similarity (0.75)
+            cached_response = check_cache(
+                query=user_message,
+                user_id=effective_user_id,
+                similarity_threshold=0.75,  # Lower threshold for better cache hits
+                model_name=self.model_name,
+                temperature=0
+            )
+
+        if cached_response:
+            # Return cached response
+            cached_message = AIMessage(content=cached_response['response_text'])
+            similarity = cached_response.get('similarity', 0.0)
+            return {
+                "messages": [cached_message],
+                "is_cached": True,
+                "similarity": similarity if similarity is not None else 0.0
+            }
+        
         try:
             # Call the model (system prompt should already be in messages)
             response = self.model_with_tools.invoke(messages)
-            return {"messages": [response]}
+            return {"messages": [response], "is_cached": False}
         except Exception as e:
             # Check for rate limit errors and re-raise with more context
             error_str = str(e).lower()
@@ -266,26 +322,170 @@ class ServiceNowAgent:
         
         return END
     
-    async def invoke(self, message: str, state: dict = None):
-        """Invoke the agent with a message."""
-        if state is None:
-            state = {"messages": [SystemMessage(content=self.system_prompt)]}
+    async def invoke(
+        self, 
+        message: str, 
+        state: dict = None,
+        conversation_id: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Invoke the agent with a message.
         
+        Args:
+            message: User message
+            state: Optional existing state
+            conversation_id: Optional conversation ID for history tracking
+            
+        Returns:
+            Dictionary with:
+            - messages: List of messages
+            - is_cached: Boolean indicating if response came from cache
+            - judge_result: Optional judge evaluation result
+            - conversation_id: Conversation ID
+        """
+        if state is None:
+            state = {
+                "messages": [SystemMessage(content=self.system_prompt)],
+                "user_id": self.user_id,
+                "conversation_id": conversation_id,
+                "is_cached": False,
+                "judge_result": None
+            }
+        else:
+            # Ensure user_id is in state (use agent's user_id if state doesn't have it)
+            if "user_id" not in state or not state.get("user_id"):
+                state["user_id"] = self.user_id
+        
+        # Use user_id from state if available, otherwise use self.user_id
+        effective_user_id = state.get("user_id") or self.user_id
+        
+        # Create conversation if needed
+        if not conversation_id and effective_user_id:
+            conversation_id = create_conversation(effective_user_id)
+            state["conversation_id"] = conversation_id
         # Add the new human message
         state["messages"].append(HumanMessage(content=message))
         
+        # Save user message to history
+        if conversation_id:
+            add_message(
+                conversation_id=conversation_id,
+                role="user",
+                content=message
+            )
+        
         # Invoke the agent
         result = await self.app.ainvoke(state)
+        
+        # Extract final assistant response
+        assistant_response = None
+        for msg in reversed(result.get("messages", [])):
+            if isinstance(msg, AIMessage) and msg.content:
+                assistant_response = msg.content
+                break
+        
+        # Store in cache if cacheable and not from cache
+        # Use effective_user_id from state
+        if assistant_response and not result.get("is_cached") and effective_user_id:
+            cache_id = store_cache(
+                query=message,
+                response=assistant_response,
+                user_id=effective_user_id,
+                model_name=self.model_name,
+                temperature=0
+            )
+            if cache_id:
+                result["cache_stored"] = True
+        
+        # Judge the response
+        judge_result = None
+        if assistant_response and not result.get("is_cached"):
+            try:
+                # Force recreate judge if it's using old model (handled in get_judge)
+                judge = get_judge(force_recreate=False)  # get_judge will auto-detect and fix old models
+                
+                # Get sources from knowledge base if available
+                kb_results = None
+                if effective_user_id:
+                    try:
+                        kb_results = query_knowledge_base(message, k=3)
+                    except Exception as kb_error:
+                        print(f"Knowledge base query for judge failed: {kb_error}")
+                        pass
+                
+                judge_result = judge.evaluate_response(
+                    user_query=message,
+                    assistant_response=assistant_response,
+                    knowledge_base_results=kb_results
+                )
+                result["judge_result"] = judge_result
+            except Exception as e:
+                # Don't fail if judge fails, but log it
+                import traceback
+                print(f"Judge evaluation failed: {e}")
+                print(traceback.format_exc())
+
+        # Save assistant message to history
+        if conversation_id and assistant_response:
+            metadata = {
+                "is_cached": result.get("is_cached", False),
+                "judge_result": judge_result
+            }
+            # Add similarity if cached
+            if result.get("is_cached") and result.get("similarity") is not None:
+                metadata["similarity"] = result.get("similarity")
+            
+            message_id = add_message(
+                conversation_id=conversation_id,
+                role="assistant",
+                content=assistant_response,
+                metadata=metadata
+            )
+
+            # Save judge evaluation if available
+            if judge_result and message_id:
+                try:
+                    judge = get_judge()
+                    judge.save_evaluation(message_id, judge_result)
+                except Exception:
+                    pass
+
+            # Generate title for new conversations (after first exchange)
+            try:
+                conv = get_conversation(conversation_id)
+                if conv and not conv.get("title"):
+                    title = generate_conversation_title(message, assistant_response)
+                    if title:
+                        update_conversation_title(conversation_id, title)
+            except Exception as e:
+                print(f"Title generation failed: {e}")
+
+        # Ensure conversation_id is in result (ALWAYS include it, even if None)
+        result["conversation_id"] = conversation_id
+
         return result
 
 
-# Create a singleton instance
-_agent_instance = None
+# Create agent instances per user
+_agent_instances: Dict[str, ServiceNowAgent] = {}
 
 
-def get_agent():
-    """Get or create the agent instance."""
-    global _agent_instance
-    if _agent_instance is None:
-        _agent_instance = ServiceNowAgent()
-    return _agent_instance
+def get_agent(user_id: Optional[str] = None):
+    """
+    Get or create the agent instance for a user.
+    
+    Args:
+        user_id: Optional user ID. If None, creates a default instance.
+        
+    Returns:
+        ServiceNowAgent instance
+    """
+    global _agent_instances
+    
+    # Use 'default' as key if no user_id provided (for backward compatibility)
+    key = user_id or 'default'
+    
+    if key not in _agent_instances:
+        _agent_instances[key] = ServiceNowAgent(user_id=user_id)
+    
+    return _agent_instances[key]

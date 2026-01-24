@@ -1,0 +1,25 @@
+[Unit]
+Description=SN Consultant FastAPI Backend
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/sn-consultant
+Environment="PATH=/var/www/sn-consultant/venv/bin"
+EnvironmentFile=/var/www/sn-consultant/.env
+ExecStart=/var/www/sn-consultant/venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000 --workers 2
+Restart=always
+RestartSec=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sn-consultant
+
+# Security
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

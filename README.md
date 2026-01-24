@@ -1,133 +1,151 @@
 # ServiceNow Consultant - AI-Powered Solution Architect
 
-An intelligent AI assistant for ServiceNow that provides expert guidance on best practices, troubleshooting, and architecture decisions. Built with Claude (Anthropic), LangChain, and Streamlit.
+An intelligent AI assistant for ServiceNow that provides expert guidance on best practices, troubleshooting, and architecture decisions. Built with Claude (Anthropic), LangGraph, FastAPI, and React.
 
-## 🚀 Quick Start
+## Quick Start
 
-### Local Development
+### Prerequisites
 
-1. **Install dependencies:**
+- Python 3.11+
+- Node.js 18+
+- Anthropic API key
+
+### Backend Setup
+
+1. **Install Python dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Set up environment variables:**
-   Create a `.env` file:
+2. **Create `.env` file:**
    ```
    ANTHROPIC_API_KEY=your_anthropic_key
    OPENAI_API_KEY=your_openai_key
    TAVILY_API_KEY=your_tavily_key
-   SN_INSTANCE=your-instance.service-now.com (optional)
-   SN_USER=your_username (optional)
-   SN_PASSWORD=your_password (optional)
+   JWT_SECRET_KEY=your_jwt_secret_key
    ```
 
-3. **Run the application:**
+3. **Start the backend server:**
    ```bash
-   streamlit run streamlit_app.py
+   python -m uvicorn api.main:app --reload --port 8000
    ```
 
-4. **Access at:** http://localhost:8501
+### Frontend Setup
 
-### Quick Deployment
+1. **Install dependencies:**
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-- **Streamlit Cloud:** See `QUICK_DEPLOY.md` or `streamlit_cloud_config.md`
-- **Docker:** `docker-compose up -d`
-- **Full Guide:** See `DEPLOYMENT_GUIDE.md`
+2. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
 
-## 📖 Features
+3. **Access at:** http://localhost:3000
 
-- 🔍 **Intelligent Search:** Searches official ServiceNow documentation
-- 📚 **Knowledge Base:** Upload and query your internal documents
-- 🔌 **Live Instance:** Connect to your ServiceNow instance for real-time data
-- 💡 **Best Practices:** AI-powered recommendations based on official docs
-- 🎯 **Context-Aware:** Considers both official standards and your internal policies
+### Production Build
 
-## 🛠️ Architecture
+```bash
+cd frontend
+npm run build
+```
+
+The built files will be in `frontend/dist/`.
+
+## Features
+
+- **Intelligent Search:** Searches official ServiceNow documentation via Tavily
+- **Knowledge Base:** Upload and query internal documents (PDF, TXT, MD)
+- **Live Instance Connection:** Connect to your ServiceNow instance for real-time data
+- **Semantic Caching:** Intelligent response caching for faster responses
+- **LLM Judge:** Quality evaluation of AI responses
+- **User Authentication:** JWT-based auth with secure cookies
+- **Admin Dashboard:** User management and system statistics
+- **Dark Mode:** Light/dark theme support
+
+## Architecture
+
+```
+├── api/                    # FastAPI backend
+│   ├── routes/            # API endpoints
+│   ├── services/          # Business logic
+│   └── models/            # Pydantic models
+├── frontend/              # React frontend
+│   ├── src/
+│   │   ├── components/    # UI components
+│   │   ├── hooks/         # React hooks
+│   │   ├── pages/         # Page components
+│   │   ├── services/      # API clients
+│   │   └── stores/        # Zustand state
+│   └── ...
+├── agent.py               # LangGraph agent
+├── knowledge_base.py      # ChromaDB vector store
+├── semantic_cache.py      # Response caching
+├── llm_judge.py          # Response quality evaluation
+└── ...
+```
+
+### Tech Stack
 
 - **AI Model:** Claude Sonnet 4 (Anthropic)
-- **Framework:** LangChain + LangGraph
-- **UI:** Streamlit
+- **Agent Framework:** LangGraph + LangChain
+- **Backend:** FastAPI + Uvicorn
+- **Frontend:** React 18 + TypeScript + Tailwind CSS
+- **State Management:** Zustand + React Query
 - **Vector DB:** ChromaDB
-- **Search:** Tavily API for public docs
+- **Search:** Tavily API
 
-## 📚 Documentation
+## API Endpoints
 
-- `DEPLOYMENT_GUIDE.md` - Comprehensive deployment options
-- `QUICK_DEPLOY.md` - Fast deployment guide
-- `manual_testing_guide.md` - Testing procedures
-- `CONNECTION_DIAGNOSTIC_REPORT.md` - Troubleshooting connection issues
+### Authentication
+- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Register
+- `POST /api/auth/logout` - Logout
+- `GET /api/auth/me` - Current user
 
-## 🔐 Security
+### Chat
+- `POST /api/chat/message` - Send message
+- `GET /api/chat/conversations` - List conversations
+- `GET /api/chat/conversations/{id}` - Get conversation
+- `DELETE /api/chat/conversations/{id}` - Delete conversation
 
-- Never commit `.env` file (already in `.gitignore`)
+### Knowledge Base
+- `POST /api/knowledge-base/upload` - Upload file
+- `GET /api/knowledge-base/files` - List files
+- `DELETE /api/knowledge-base/files/{id}` - Delete file
+
+### Settings
+- `GET /api/settings` - Get settings
+- `PUT /api/settings` - Update settings
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ANTHROPIC_API_KEY` | Yes | Anthropic API key for Claude |
+| `OPENAI_API_KEY` | Yes | OpenAI API key for embeddings |
+| `TAVILY_API_KEY` | Yes | Tavily API key for web search |
+| `JWT_SECRET_KEY` | Yes | Secret key for JWT tokens |
+| `SN_INSTANCE` | No | ServiceNow instance URL |
+| `SN_USER` | No | ServiceNow username |
+| `SN_PASSWORD` | No | ServiceNow password |
+
+## Docker Deployment
+
+```bash
+docker-compose up -d
+```
+
+## Security
+
+- Never commit `.env` file
 - Use environment variables or secrets management
 - Rotate API keys regularly
 - Use least-privilege ServiceNow credentials
+- JWT tokens stored in HTTP-only cookies
 
----
+## License
 
-## ServiceNow Python Client
-
-A Python-based client for interacting with ServiceNow REST API using async httpx requests.
-
-## Setup
-
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-2. Create a `.env` file based on `.env.example`:
-```bash
-cp .env.example .env
-```
-
-3. Update `.env` with your ServiceNow credentials:
-```
-SN_INSTANCE=your-instance.service-now.com
-SN_USER=your_username
-SN_PASSWORD=your_password
-```
-
-## Usage
-
-### Basic Usage
-
-```python
-import asyncio
-from servicenow_client import ServiceNowClient
-
-async def main():
-    client = ServiceNowClient()
-    
-    # Get records from a table
-    records = await client.get_table_records(
-        table_name="sys_user",
-        query_params={"active": "true"},
-        limit=10
-    )
-    
-    print(records)
-    await client.close()
-
-asyncio.run(main())
-```
-
-### Using Context Manager
-
-```python
-async def main():
-    async with ServiceNowClient() as client:
-        records = await client.get_table_records("sys_user", limit=5)
-        print(records)
-```
-
-## Testing
-
-Run the test script:
-```bash
-python main.py
-```
-
-This will test the connection to ServiceNow and retrieve a few records from the `sys_user` table.
+MIT

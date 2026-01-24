@@ -52,6 +52,10 @@ chroma_db/
 *.sqlite
 *.sqlite3
 
+# Database and user data
+data/
+user_documents/
+
 # Logs
 *.log
 .cursor/
@@ -75,3 +79,14 @@ docker-compose.override.yml
 *.tmp
 *.bak
 *.swp
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+frontend/tsconfig.node.tsbuildinfo
+frontend/vite.config.d.ts
+frontend/vite.config.js
+
+# Streamlit (deprecated)
+.streamlit/

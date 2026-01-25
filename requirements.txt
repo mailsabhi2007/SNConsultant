@@ -29,6 +29,7 @@ streamlit-option-menu>=0.3.0
 
 # User management and security
 bcrypt>=4.0.0
+email-validator>=2.0.0
 
 # API backend
 fastapi>=0.115.0

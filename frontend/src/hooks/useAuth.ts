@@ -35,7 +35,7 @@ export function useAuth() {
     return current;
   };
 
-  const register = async (username: string, password: string, email?: string) => {
+  const register = async (username: string, password: string, email: string) => {
     const current = await apiRegister(username, password, email);
     setUser(current);
     return current;

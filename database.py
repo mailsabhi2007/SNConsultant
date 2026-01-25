@@ -46,7 +46,8 @@ def init_database():
                 user_id TEXT PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
-                email TEXT,
+                email TEXT NOT NULL,
+                is_admin BOOLEAN DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP,
                 is_active BOOLEAN DEFAULT 1
@@ -156,6 +157,20 @@ def init_database():
                 FOREIGN KEY (message_id) REFERENCES messages(message_id) ON DELETE CASCADE
             )
         """)
+
+        # User sessions for analytics tracking
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                session_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ended_at TIMESTAMP,
+                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                prompt_count INTEGER DEFAULT 0,
+                duration_seconds INTEGER DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            )
+        """)
         
         # Create indexes for performance
         cursor.execute("""
@@ -179,10 +194,20 @@ def init_database():
         """)
         
         cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_semantic_cache_expires 
+            CREATE INDEX IF NOT EXISTS idx_semantic_cache_expires
             ON semantic_cache(expires_at)
         """)
-        
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_user
+            ON user_sessions(user_id)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_user_sessions_started
+            ON user_sessions(started_at)
+        """)
+
         conn.commit()
         print("Database initialized successfully")
 
@@ -226,7 +251,21 @@ def get_database_stats() -> Dict[str, Any]:
         # Count flagged hallucinations
         cursor.execute("SELECT COUNT(*) FROM hallucination_checks WHERE is_hallucination = 1")
         stats['flagged_hallucinations'] = cursor.fetchone()[0]
-    
+
+        # Count sessions
+        cursor.execute("SELECT COUNT(*) FROM user_sessions")
+        stats['total_sessions'] = cursor.fetchone()[0]
+
+        # Average session duration
+        cursor.execute("SELECT AVG(duration_seconds) FROM user_sessions WHERE duration_seconds > 0")
+        result = cursor.fetchone()[0]
+        stats['avg_session_duration'] = round(result, 2) if result else 0
+
+        # Total prompts across all sessions
+        cursor.execute("SELECT SUM(prompt_count) FROM user_sessions")
+        result = cursor.fetchone()[0]
+        stats['total_prompts'] = result if result else 0
+
     return stats
 
 

@@ -17,38 +17,44 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
 
 
-def create_user(username: str, password: str, email: Optional[str] = None) -> str:
+def create_user(username: str, password: str, email: str, is_admin: bool = False) -> str:
     """
     Create a new user.
-    
+
     Args:
         username: Unique username
         password: Plain text password (will be hashed)
-        email: Optional email address
-        
+        email: Email address (required)
+        is_admin: Whether user has admin privileges
+
     Returns:
         user_id: The created user's ID
-        
+
     Raises:
-        ValueError: If username already exists
+        ValueError: If username already exists or email already exists
     """
     user_id = str(uuid.uuid4())
     password_hash = hash_password(password)
-    
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         # Check if username already exists
         cursor.execute("SELECT user_id FROM users WHERE username = ?", (username,))
         if cursor.fetchone():
             raise ValueError(f"Username '{username}' already exists")
-        
+
+        # Check if email already exists
+        cursor.execute("SELECT user_id FROM users WHERE email = ?", (email,))
+        if cursor.fetchone():
+            raise ValueError(f"Email '{email}' already exists")
+
         # Insert new user
         cursor.execute("""
-            INSERT INTO users (user_id, username, password_hash, email, created_at, is_active)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (user_id, username, password_hash, email, datetime.now(), True))
-        
+            INSERT INTO users (user_id, username, password_hash, email, is_admin, created_at, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (user_id, username, password_hash, email, is_admin, datetime.now(), True))
+
         return user_id
 
 
@@ -91,23 +97,24 @@ def get_user(user_id: str) -> Optional[Dict[str, Any]]:
     """Get user information by user_id."""
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         cursor.execute("""
-            SELECT user_id, username, email, created_at, last_login, is_active
+            SELECT user_id, username, email, is_admin, created_at, last_login, is_active
             FROM users WHERE user_id = ?
         """, (user_id,))
-        
+
         row = cursor.fetchone()
         if not row:
             return None
-        
+
         return {
             'user_id': row[0],
             'username': row[1],
             'email': row[2],
-            'created_at': row[3],
-            'last_login': row[4],
-            'is_active': bool(row[5])
+            'is_admin': bool(row[3]),
+            'created_at': row[4],
+            'last_login': row[5],
+            'is_active': bool(row[6])
         }
 
 
@@ -115,23 +122,24 @@ def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
     """Get user information by username."""
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         cursor.execute("""
-            SELECT user_id, username, email, created_at, last_login, is_active
+            SELECT user_id, username, email, is_admin, created_at, last_login, is_active
             FROM users WHERE username = ?
         """, (username,))
-        
+
         row = cursor.fetchone()
         if not row:
             return None
-        
+
         return {
             'user_id': row[0],
             'username': row[1],
             'email': row[2],
-            'created_at': row[3],
-            'last_login': row[4],
-            'is_active': bool(row[5])
+            'is_admin': bool(row[3]),
+            'created_at': row[4],
+            'last_login': row[5],
+            'is_active': bool(row[6])
         }
 
 
@@ -187,29 +195,30 @@ def list_users(active_only: bool = True) -> List[Dict[str, Any]]:
     """List all users."""
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         if active_only:
             cursor.execute("""
-                SELECT user_id, username, email, created_at, last_login, is_active
+                SELECT user_id, username, email, is_admin, created_at, last_login, is_active
                 FROM users WHERE is_active = 1
                 ORDER BY created_at DESC
             """)
         else:
             cursor.execute("""
-                SELECT user_id, username, email, created_at, last_login, is_active
+                SELECT user_id, username, email, is_admin, created_at, last_login, is_active
                 FROM users
                 ORDER BY created_at DESC
             """)
-        
+
         users = []
         for row in cursor.fetchall():
             users.append({
                 'user_id': row[0],
                 'username': row[1],
                 'email': row[2],
-                'created_at': row[3],
-                'last_login': row[4],
-                'is_active': bool(row[5])
+                'is_admin': bool(row[3]),
+                'created_at': row[4],
+                'last_login': row[5],
+                'is_active': bool(row[6])
             })
-        
+
         return users

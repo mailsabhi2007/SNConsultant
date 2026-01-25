@@ -3,12 +3,13 @@
 import asyncio
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status, Response, Request
 
 from api.dependencies import get_current_user
 from api.models.chat import ChatRequest, ChatResponse, ConversationSummary, ConversationDetail
 from api.services.agent_service import send_message
 from api.services.auth_service import verify_access_token
+from api.services.session_service import get_or_create_session, track_prompt
 from history_manager import list_user_conversations, get_conversation, get_conversation_messages
 
 
@@ -17,9 +18,28 @@ router = APIRouter()
 
 @router.post("/message", response_model=ChatResponse)
 async def post_message(
-    payload: ChatRequest, current_user: dict = Depends(get_current_user)
+    payload: ChatRequest,
+    request: Request,
+    response: Response,
+    current_user: dict = Depends(get_current_user)
 ) -> ChatResponse:
     """Send a message to the agent."""
+    # Get or create session for tracking
+    session_id = request.cookies.get("session_id")
+    session_id = get_or_create_session(current_user["user_id"], session_id)
+
+    # Set session cookie
+    response.set_cookie(
+        key="session_id",
+        value=session_id,
+        httponly=True,
+        samesite="lax",
+        max_age=1800  # 30 minutes
+    )
+
+    # Track the prompt
+    track_prompt(session_id)
+
     result = await send_message(
         message=payload.message,
         user_id=current_user["user_id"],
@@ -81,6 +101,10 @@ async def stream_chat(websocket: WebSocket, token: Optional[str] = None) -> None
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
+    # Get or create session
+    session_id = websocket.cookies.get("session_id")
+    session_id = get_or_create_session(user["user_id"], session_id)
+
     try:
         payload = await websocket.receive_json()
         message = payload.get("message", "")
@@ -90,6 +114,9 @@ async def stream_chat(websocket: WebSocket, token: Optional[str] = None) -> None
             await websocket.send_json({"type": "error", "error": "Message is required"})
             await websocket.close()
             return
+
+        # Track the prompt
+        track_prompt(session_id)
 
         result = await send_message(
             message=message,

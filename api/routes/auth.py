@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from fastapi import APIRouter, HTTPException, Response, status, Depends
+from fastapi import APIRouter, HTTPException, Response, status, Depends, Request
 
 from api.dependencies import get_current_user
 from api.models.auth import LoginRequest, RegisterRequest, UserResponse
@@ -12,6 +12,7 @@ from api.services.auth_service import (
     register_user,
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
+from analytics_service import end_session
 
 
 router = APIRouter()
@@ -50,9 +51,18 @@ def register(payload: RegisterRequest) -> UserResponse:
 
 
 @router.post("/logout")
-def logout(response: Response) -> dict:
-    """Clear access token cookie."""
+def logout(request: Request, response: Response) -> dict:
+    """Clear access token cookie and end session."""
+    # End the session if exists
+    session_id = request.cookies.get("session_id")
+    if session_id:
+        try:
+            end_session(session_id)
+        except:
+            pass  # Session might not exist, that's okay
+
     response.delete_cookie("access_token")
+    response.delete_cookie("session_id")
     return {"status": "ok"}
 
 

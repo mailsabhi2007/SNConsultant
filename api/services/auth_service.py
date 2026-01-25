@@ -63,11 +63,21 @@ def login_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     user = get_user(user_id)
     if not user:
         return None
+
+    # Check if this should be an admin (first user or username-based)
+    is_admin = user.get("is_admin", False) or is_admin_user(user["user_id"], user["username"])
+
+    # Update is_admin in database if it changed
+    if is_admin and not user.get("is_admin", False):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET is_admin = 1 WHERE user_id = ?", (user_id,))
+
     return {
         "user_id": user["user_id"],
         "username": user["username"],
         "email": user.get("email"),
-        "is_admin": is_admin_user(user["user_id"], user["username"]),
+        "is_admin": is_admin,
     }
 
 

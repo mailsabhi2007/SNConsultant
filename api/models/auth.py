@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 
 class LoginRequest(BaseModel):
@@ -13,7 +13,7 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=1)
     password: str = Field(..., min_length=6)
-    email: Optional[str] = None
+    email: EmailStr = Field(..., description="Valid email address required")
 
 
 class UserResponse(BaseModel):

@@ -18,7 +18,7 @@ const loginSchema = z.object({
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -68,7 +68,7 @@ export function LoginPage() {
     setError(null);
     setIsLoading(true);
     try {
-      await registerUser(data.username.trim(), data.password, data.email || undefined);
+      await registerUser(data.username.trim(), data.password, data.email.trim());
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
@@ -190,7 +190,7 @@ export function LoginPage() {
 
                   <div className="space-y-2">
                     <label htmlFor="register-email" className="text-sm font-medium">
-                      Email <span className="text-muted-foreground">(optional)</span>
+                      Email
                     </label>
                     <Input
                       id="register-email"

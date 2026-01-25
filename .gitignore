@@ -26,6 +26,9 @@ wheels/
 *.egg
 MANIFEST
 
+# Frontend lib is needed - only ignore Python lib
+!frontend/src/lib/
+
 # Virtual environments
 venv/
 env/

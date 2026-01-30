@@ -190,9 +190,9 @@ class ServiceNowAgent:
             "- **Workflow Order:** Phase 1 → Phase 2 → Phase 3 → Phase 4 (if needed). Never skip or reorder phases.\n"
         )
         
-        # Get public knowledge search tool
-        consult_public_docs = get_public_knowledge_tool()
-        
+        # Get public knowledge search tool (with user-specific or global config)
+        consult_public_docs = get_public_knowledge_tool(user_id=user_id)
+
         # Bind the core tools
         self.tools = [
             consult_public_docs,

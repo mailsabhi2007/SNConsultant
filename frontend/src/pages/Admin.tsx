@@ -11,10 +11,15 @@ import {
   Mail,
   ChevronDown,
   ChevronUp,
+  Search,
+  Plus,
+  X,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -36,10 +41,18 @@ import {
   getAllUsersAnalytics,
   getUserSessions,
   getUserPrompts,
+  getTavilyConfig,
+  updateTavilyConfig,
+  addIncludedDomain,
+  removeIncludedDomain,
+  addExcludedDomain,
+  removeExcludedDomain,
+  resetTavilyConfig,
   SystemAnalytics,
   UserAnalytics,
   UserSession,
   UserPrompt,
+  TavilyConfig,
 } from "@/services/admin";
 
 interface StatCardProps {
@@ -85,17 +98,124 @@ export function AdminPage() {
   const [sortBy, setSortBy] = useState<keyof UserAnalytics>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+  // Tavily config state
+  const [tavilyConfig, setTavilyConfig] = useState<TavilyConfig | null>(null);
+  const [loadingTavily, setLoadingTavily] = useState(false);
+  const [newIncludedDomain, setNewIncludedDomain] = useState("");
+  const [newExcludedDomain, setNewExcludedDomain] = useState("");
+  const [tavilyError, setTavilyError] = useState<string | null>(null);
+
   useEffect(() => {
-    Promise.all([getSystemAnalytics(), getAllUsersAnalytics()])
-      .then(([analyticsData, usersData]) => {
+    Promise.all([getSystemAnalytics(), getAllUsersAnalytics(), getTavilyConfig()])
+      .then(([analyticsData, usersData, tavilyData]) => {
         setAnalytics(analyticsData);
         setUsers(usersData);
+        setTavilyConfig(tavilyData);
       })
       .catch(() => {
         setError("Failed to load admin analytics");
       })
       .finally(() => setIsLoading(false));
   }, []);
+
+  const handleAddIncludedDomain = async () => {
+    if (!newIncludedDomain.trim()) return;
+
+    setLoadingTavily(true);
+    setTavilyError(null);
+    try {
+      const result = await addIncludedDomain(newIncludedDomain.trim());
+      setTavilyConfig(result.config);
+      setNewIncludedDomain("");
+    } catch (err) {
+      setTavilyError("Failed to add domain");
+    } finally {
+      setLoadingTavily(false);
+    }
+  };
+
+  const handleRemoveIncludedDomain = async (domain: string) => {
+    setLoadingTavily(true);
+    setTavilyError(null);
+    try {
+      const result = await removeIncludedDomain(domain);
+      setTavilyConfig(result.config);
+    } catch (err) {
+      setTavilyError("Failed to remove domain");
+    } finally {
+      setLoadingTavily(false);
+    }
+  };
+
+  const handleAddExcludedDomain = async () => {
+    if (!newExcludedDomain.trim()) return;
+
+    setLoadingTavily(true);
+    setTavilyError(null);
+    try {
+      const result = await addExcludedDomain(newExcludedDomain.trim());
+      setTavilyConfig(result.config);
+      setNewExcludedDomain("");
+    } catch (err) {
+      setTavilyError("Failed to add domain");
+    } finally {
+      setLoadingTavily(false);
+    }
+  };
+
+  const handleRemoveExcludedDomain = async (domain: string) => {
+    setLoadingTavily(true);
+    setTavilyError(null);
+    try {
+      const result = await removeExcludedDomain(domain);
+      setTavilyConfig(result.config);
+    } catch (err) {
+      setTavilyError("Failed to remove domain");
+    } finally {
+      setLoadingTavily(false);
+    }
+  };
+
+  const handleResetTavilyConfig = async () => {
+    if (!confirm("Are you sure you want to reset Tavily configuration to defaults?")) return;
+
+    setLoadingTavily(true);
+    setTavilyError(null);
+    try {
+      const result = await resetTavilyConfig();
+      setTavilyConfig(result.config);
+    } catch (err) {
+      setTavilyError("Failed to reset configuration");
+    } finally {
+      setLoadingTavily(false);
+    }
+  };
+
+  const handleUpdateSearchDepth = async (depth: string) => {
+    setLoadingTavily(true);
+    setTavilyError(null);
+    try {
+      const result = await updateTavilyConfig({ search_depth: depth });
+      setTavilyConfig(result.config);
+    } catch (err) {
+      setTavilyError("Failed to update search depth");
+    } finally {
+      setLoadingTavily(false);
+    }
+  };
+
+  const handleUpdateMaxResults = async (maxResults: number) => {
+    setLoadingTavily(true);
+    setTavilyError(null);
+    try {
+      const result = await updateTavilyConfig({ max_results: maxResults });
+      setTavilyConfig(result.config);
+    } catch (err) {
+      setTavilyError("Failed to update max results");
+    } finally {
+      setLoadingTavily(false);
+    }
+  };
 
   const handleUserClick = async (user: UserAnalytics) => {
     setSelectedUser(user);
@@ -333,6 +453,183 @@ export function AdminPage() {
               </TableBody>
             </Table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Tavily Configuration */}
+      <Card className="mt-8">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5" />
+                Tavily AI Search Configuration
+              </CardTitle>
+              <CardDescription>
+                Configure search sources and domains for Tavily AI web search
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetTavilyConfig}
+              disabled={loadingTavily}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Reset to Defaults
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {tavilyError && (
+            <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {tavilyError}
+            </div>
+          )}
+
+          {tavilyConfig && (
+            <div className="space-y-6">
+              {/* Search Settings */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Search Depth</label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={tavilyConfig.search_depth === "basic" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleUpdateSearchDepth("basic")}
+                      disabled={loadingTavily}
+                    >
+                      Basic
+                    </Button>
+                    <Button
+                      variant={tavilyConfig.search_depth === "advanced" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleUpdateSearchDepth("advanced")}
+                      disabled={loadingTavily}
+                    >
+                      Advanced
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Basic: Faster, less comprehensive. Advanced: Slower, more thorough.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Max Results</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={tavilyConfig.max_results}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (val >= 1 && val <= 20) {
+                        handleUpdateMaxResults(val);
+                      }
+                    }}
+                    disabled={loadingTavily}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Maximum number of search results (1-20)
+                  </p>
+                </div>
+              </div>
+
+              {/* Included Domains */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Included Domains</label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Restrict search results to only these domains. Leave empty to search all sources.
+                </p>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    placeholder="e.g., servicenow.com"
+                    value={newIncludedDomain}
+                    onChange={(e) => setNewIncludedDomain(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleAddIncludedDomain();
+                      }
+                    }}
+                    disabled={loadingTavily}
+                  />
+                  <Button
+                    onClick={handleAddIncludedDomain}
+                    disabled={loadingTavily || !newIncludedDomain.trim()}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {tavilyConfig.included_domains.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No included domains configured</p>
+                  ) : (
+                    tavilyConfig.included_domains.map((domain) => (
+                      <Badge key={domain} variant="secondary" className="flex items-center gap-1">
+                        {domain}
+                        <button
+                          onClick={() => handleRemoveIncludedDomain(domain)}
+                          disabled={loadingTavily}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Excluded Domains */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Excluded Domains</label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Block search results from these domains.
+                </p>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    placeholder="e.g., wikipedia.org"
+                    value={newExcludedDomain}
+                    onChange={(e) => setNewExcludedDomain(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleAddExcludedDomain();
+                      }
+                    }}
+                    disabled={loadingTavily}
+                  />
+                  <Button
+                    onClick={handleAddExcludedDomain}
+                    disabled={loadingTavily || !newExcludedDomain.trim()}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {tavilyConfig.excluded_domains.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No excluded domains configured</p>
+                  ) : (
+                    tavilyConfig.excluded_domains.map((domain) => (
+                      <Badge key={domain} variant="destructive" className="flex items-center gap-1">
+                        {domain}
+                        <button
+                          onClick={() => handleRemoveExcludedDomain(domain)}
+                          disabled={loadingTavily}
+                          className="ml-1 hover:text-destructive-foreground/70"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

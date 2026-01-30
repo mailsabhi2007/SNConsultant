@@ -80,3 +80,54 @@ export async function getUserPrompts(userId: string, limit: number = 100): Promi
   });
   return response.data;
 }
+
+// Tavily configuration interfaces and functions
+export interface TavilyConfig {
+  included_domains: string[];
+  excluded_domains: string[];
+  search_depth: string;
+  max_results: number;
+  is_user_specific: boolean;
+}
+
+export interface TavilyConfigUpdate {
+  included_domains?: string[];
+  excluded_domains?: string[];
+  search_depth?: string;
+  max_results?: number;
+}
+
+export async function getTavilyConfig(): Promise<TavilyConfig> {
+  const response = await api.get<TavilyConfig>("/api/admin/tavily-config");
+  return response.data;
+}
+
+export async function updateTavilyConfig(config: TavilyConfigUpdate): Promise<{ status: string; config: TavilyConfig }> {
+  const response = await api.put<{ status: string; config: TavilyConfig }>("/api/admin/tavily-config", config);
+  return response.data;
+}
+
+export async function addIncludedDomain(domain: string): Promise<{ status: string; config: TavilyConfig }> {
+  const response = await api.post<{ status: string; config: TavilyConfig }>("/api/admin/tavily-config/included-domains", { domain });
+  return response.data;
+}
+
+export async function removeIncludedDomain(domain: string): Promise<{ status: string; config: TavilyConfig }> {
+  const response = await api.delete<{ status: string; config: TavilyConfig }>(`/api/admin/tavily-config/included-domains/${encodeURIComponent(domain)}`);
+  return response.data;
+}
+
+export async function addExcludedDomain(domain: string): Promise<{ status: string; config: TavilyConfig }> {
+  const response = await api.post<{ status: string; config: TavilyConfig }>("/api/admin/tavily-config/excluded-domains", { domain });
+  return response.data;
+}
+
+export async function removeExcludedDomain(domain: string): Promise<{ status: string; config: TavilyConfig }> {
+  const response = await api.delete<{ status: string; config: TavilyConfig }>(`/api/admin/tavily-config/excluded-domains/${encodeURIComponent(domain)}`);
+  return response.data;
+}
+
+export async function resetTavilyConfig(): Promise<{ status: string; config: TavilyConfig }> {
+  const response = await api.post<{ status: string; config: TavilyConfig }>("/api/admin/tavily-config/reset");
+  return response.data;
+}

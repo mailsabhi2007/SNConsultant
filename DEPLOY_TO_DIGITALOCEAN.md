@@ -12,7 +12,7 @@
 SSH into your droplet and run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mailsabhi2007/SNConsultant/master/scripts/deploy_digitalocean.sh | bash
+curl -fsSL https://raw.githubusercontent.com/mailsabhi2007/SNConsultant/main/scripts/deploy_digitalocean.sh | bash
 ```
 
 **That's it!** The script will:

@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
+import { animations } from "@/lib/animations";
+import { gradients, patterns, shadows } from "@/lib/visualEffects";
 import axios from "axios";
 
 const loginSchema = z.object({
@@ -87,18 +90,38 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+    <div className={cn("relative flex min-h-screen items-center justify-center overflow-hidden p-4", gradients.subtlePrimary)}>
+      {/* Animated background pattern */}
+      <div className={cn("absolute inset-0 opacity-40", patterns.mesh)} />
+      <div className={cn("absolute inset-0 opacity-20", patterns.dots)} />
+
+      {/* Floating gradient orb */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="w-full max-w-md"
+        className={cn("absolute -top-32 -left-32 h-96 w-96 rounded-full blur-3xl opacity-20", gradients.mesh)}
+        animate={{
+          y: [0, -20, 0],
+          x: [0, 20, 0],
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+
+      <motion.div
+        {...animations.fadeInScale}
+        className="w-full max-w-md relative z-10"
       >
-        <Card className="border-border/50 shadow-lg">
+        <Card className={cn("border-border/50 backdrop-blur-xl bg-background/80", shadows.medium)}>
           <CardHeader className="space-y-4 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <motion.div
+              className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               <Bot className="h-6 w-6 text-primary" />
-            </div>
+            </motion.div>
             <div>
               <CardTitle className="text-2xl">Welcome back</CardTitle>
               <CardDescription className="mt-1">
@@ -159,10 +182,12 @@ export function LoginPage() {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In
-                  </Button>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Sign In
+                    </Button>
+                  </motion.div>
 
                   <p className="text-center text-xs text-muted-foreground">
                     Your session stays active for 30 minutes.
@@ -223,10 +248,12 @@ export function LoginPage() {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Account
-                  </Button>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Create Account
+                    </Button>
+                  </motion.div>
                 </form>
               </TabsContent>
             </Tabs>

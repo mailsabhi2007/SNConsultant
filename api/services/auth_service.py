@@ -45,6 +45,7 @@ def verify_access_token(token: str) -> Optional[Dict[str, Any]]:
             "username": user["username"],
             "email": user.get("email"),
             "is_admin": bool(payload.get("is_admin", False)),
+            "is_superadmin": bool(payload.get("is_superadmin", False)),
         }
     except JWTError:
         return None
@@ -67,17 +68,26 @@ def login_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     # Check if this should be an admin (first user or username-based)
     is_admin = user.get("is_admin", False) or is_admin_user(user["user_id"], user["username"])
 
-    # Update is_admin in database if it changed
+    # Check if this should be a superadmin
+    is_superadmin = user.get("is_superadmin", False) or is_superadmin_user(user["user_id"], user["username"])
+
+    # Update roles in database if they changed
     if is_admin and not user.get("is_admin", False):
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("UPDATE users SET is_admin = 1 WHERE user_id = ?", (user_id,))
+
+    if is_superadmin and not user.get("is_superadmin", False):
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET is_superadmin = 1 WHERE user_id = ?", (user_id,))
 
     return {
         "user_id": user["user_id"],
         "username": user["username"],
         "email": user.get("email"),
         "is_admin": is_admin,
+        "is_superadmin": is_superadmin,
     }
 
 
@@ -87,6 +97,22 @@ def is_admin_user(user_id: str, username: str) -> bool:
         return True
 
     # First user created gets admin privileges
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id FROM users ORDER BY created_at ASC LIMIT 1")
+        row = cursor.fetchone()
+        if row and row[0] == user_id:
+            return True
+
+    return False
+
+
+def is_superadmin_user(user_id: str, username: str) -> bool:
+    """Determine if user should have superadmin access."""
+    if username.lower() == "superadmin":
+        return True
+
+    # First user created gets superadmin privileges
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT user_id FROM users ORDER BY created_at ASC LIMIT 1")

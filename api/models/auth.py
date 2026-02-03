@@ -21,3 +21,4 @@ class UserResponse(BaseModel):
     username: str
     email: Optional[str] = None
     is_admin: bool = False
+    is_superadmin: bool = False

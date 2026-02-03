@@ -264,3 +264,70 @@ def delete_user_learned_preference(user_id: str, preference_id: int) -> bool:
             WHERE user_id = ? AND preference_id = ?
         """, (user_id, preference_id))
         return cursor.rowcount > 0
+
+
+def is_multi_agent_enabled(user_id: str) -> bool:
+    """Check if multi-agent system is enabled for a user.
+
+    Uses a rollout percentage strategy:
+    1. Check if user has explicit override (user_config)
+    2. Check system rollout percentage
+    3. Use consistent hashing to determine if user is in rollout percentage
+
+    Args:
+        user_id: User ID
+
+    Returns:
+        True if multi-agent is enabled for this user
+    """
+    # Check for user-specific override
+    user_override = get_user_config(user_id, 'features', 'multi_agent_enabled')
+    if user_override is not None:
+        return bool(user_override)
+
+    # Check system-wide rollout percentage
+    rollout_percentage = get_system_config('multi_agent_rollout_percentage', 0)
+
+    # If 0%, disabled for all
+    if rollout_percentage <= 0:
+        return False
+
+    # If 100%, enabled for all
+    if rollout_percentage >= 100:
+        return True
+
+    # Use consistent hashing to determine rollout
+    # This ensures same user always gets same result for same percentage
+    import hashlib
+    user_hash = int(hashlib.md5(user_id.encode()).hexdigest(), 16)
+    user_bucket = user_hash % 100  # 0-99
+
+    return user_bucket < rollout_percentage
+
+
+def set_multi_agent_override(user_id: str, enabled: bool) -> bool:
+    """Set user-specific multi-agent override.
+
+    Args:
+        user_id: User ID
+        enabled: Whether to enable multi-agent for this user
+
+    Returns:
+        True if successful
+    """
+    return set_user_config(user_id, 'features', 'multi_agent_enabled', enabled)
+
+
+def set_multi_agent_rollout_percentage(percentage: int) -> bool:
+    """Set system-wide multi-agent rollout percentage.
+
+    Args:
+        percentage: Rollout percentage (0-100)
+
+    Returns:
+        True if successful
+    """
+    if percentage < 0 or percentage > 100:
+        raise ValueError("Rollout percentage must be between 0 and 100")
+
+    return set_system_config('multi_agent_rollout_percentage', percentage)

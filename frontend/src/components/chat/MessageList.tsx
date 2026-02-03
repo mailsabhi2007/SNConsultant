@@ -13,6 +13,8 @@ interface MessageListProps {
 export function MessageList({ messages, isLoading }: MessageListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
+  console.log('MessageList render - messages:', messages.length, 'isLoading:', isLoading, messages);
+
   // Use virtual scrolling for large message lists
   const virtualizer = useVirtualizer({
     count: messages.length,

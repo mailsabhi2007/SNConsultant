@@ -13,6 +13,8 @@ export interface Message {
   is_cached?: boolean;
   judge_result?: JudgeResult | null;
   isStreaming?: boolean;
+  current_agent?: string;
+  handoff_count?: number;
 }
 
 export interface JudgeResult {

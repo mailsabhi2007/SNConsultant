@@ -131,3 +131,136 @@ export async function resetTavilyConfig(): Promise<{ status: string; config: Tav
   const response = await api.post<{ status: string; config: TavilyConfig }>("/api/admin/tavily-config/reset");
   return response.data;
 }
+
+// Multi-Agent Management Interfaces and Functions
+
+export interface MultiAgentAnalytics {
+  total_handoffs: number;
+  handoff_paths: Array<{
+    from: string;
+    to: string;
+    count: number;
+  }>;
+  conversations_with_handoffs: number;
+  total_conversations: number;
+  handoff_rate_percentage: number;
+  days: number;
+}
+
+export interface MultiAgentRollout {
+  rollout_percentage: number;
+  status: string;
+}
+
+export interface MultiAgentUser {
+  user_id: string;
+  username: string;
+  email: string;
+  is_admin: boolean;
+  is_superadmin: boolean;
+  is_active: boolean;
+  multi_agent_enabled: boolean;
+  multi_agent_source: 'override' | 'rollout';
+}
+
+export interface AgentPrompt {
+  agent_name: string;
+  system_prompt: string | null;
+  is_active: boolean;
+  updated_at: string | null;
+  updated_by: string | null;
+}
+
+export interface AgentPromptDetail {
+  agent_name: string;
+  custom_prompt: string | null;
+  is_using_custom: boolean;
+  default_prompt: string;
+}
+
+export interface MultiAgentConfig {
+  config_key: string;
+  config_value: string;
+  config_type: string;
+  description: string | null;
+  is_active: boolean;
+  updated_at: string | null;
+  updated_by: string | null;
+}
+
+// Admin endpoints (requires admin role)
+
+export async function getMultiAgentAnalytics(days: number = 30): Promise<MultiAgentAnalytics> {
+  const response = await api.get<MultiAgentAnalytics>("/api/admin/multi-agent/analytics", {
+    params: { days },
+  });
+  return response.data;
+}
+
+export async function getMultiAgentRollout(): Promise<MultiAgentRollout> {
+  const response = await api.get<MultiAgentRollout>("/api/admin/multi-agent/rollout");
+  return response.data;
+}
+
+export async function updateMultiAgentRollout(percentage: number): Promise<{ status: string; rollout_percentage: number; message: string }> {
+  const response = await api.put("/api/admin/multi-agent/rollout", { percentage });
+  return response.data;
+}
+
+export async function getMultiAgentUsers(): Promise<{ users: MultiAgentUser[]; total_count: number }> {
+  const response = await api.get("/api/admin/multi-agent/users");
+  return response.data;
+}
+
+export async function toggleMultiAgentForUser(userId: string, enabled: boolean): Promise<{ status: string; message: string }> {
+  const response = await api.put(`/api/admin/multi-agent/users/${userId}`, { enabled });
+  return response.data;
+}
+
+export async function removeMultiAgentOverride(userId: string): Promise<{ status: string; message: string }> {
+  const response = await api.delete(`/api/admin/multi-agent/users/${userId}/override`);
+  return response.data;
+}
+
+// Superadmin endpoints (requires superadmin role)
+
+export async function getAllAgentPrompts(): Promise<{ prompts: AgentPrompt[] }> {
+  const response = await api.get("/api/admin/multi-agent/prompts");
+  return response.data;
+}
+
+export async function getAgentPrompt(agentName: string): Promise<AgentPromptDetail> {
+  const response = await api.get<AgentPromptDetail>(`/api/admin/multi-agent/prompts/${agentName}`);
+  return response.data;
+}
+
+export async function updateAgentPrompt(agentName: string, systemPrompt: string): Promise<{ status: string; message: string }> {
+  const response = await api.put(`/api/admin/multi-agent/prompts/${agentName}`, {
+    system_prompt: systemPrompt,
+  });
+  return response.data;
+}
+
+export async function resetAgentPrompt(agentName: string): Promise<{ status: string; message: string }> {
+  const response = await api.post(`/api/admin/multi-agent/prompts/${agentName}/reset`);
+  return response.data;
+}
+
+export async function getAllMultiAgentConfigs(): Promise<{ configs: MultiAgentConfig[] }> {
+  const response = await api.get("/api/admin/multi-agent/config");
+  return response.data;
+}
+
+export async function updateMultiAgentConfig(
+  configKey: string,
+  configValue: string,
+  configType: string = 'string',
+  description?: string
+): Promise<{ status: string; message: string }> {
+  const response = await api.put(`/api/admin/multi-agent/config/${configKey}`, {
+    config_value: configValue,
+    config_type: configType,
+    description,
+  });
+  return response.data;
+}

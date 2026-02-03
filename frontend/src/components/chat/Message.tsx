@@ -3,8 +3,11 @@ import { motion } from "framer-motion";
 import { Bot, User } from "lucide-react";
 import { MessageContent } from "./MessageContent";
 import { MessageActions } from "./MessageActions";
+import { AgentBadge } from "./AgentBadge";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { animations } from "@/lib/animations";
+import { shadows } from "@/lib/visualEffects";
 import type { Message as MessageType } from "@/types";
 
 interface MessageProps {
@@ -17,12 +20,11 @@ export function Message({ message, isLast }: MessageProps) {
   const isAssistant = message.role === "assistant";
   const isUser = message.role === "user";
 
+  console.log('Message render:', message.role, message.id, message.content.substring(0, 50));
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
+      {...animations.fadeInUp}
       className={cn(
         "group relative flex gap-3",
         isUser && "flex-row-reverse"
@@ -31,19 +33,20 @@ export function Message({ message, isLast }: MessageProps) {
       onMouseLeave={() => setShowActions(false)}
     >
       {/* Avatar */}
-      <div
+      <motion.div
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all duration-300",
           isAssistant && "bg-primary/10 text-primary",
           isUser && "bg-muted"
         )}
+        whileHover={{ scale: 1.1 }}
       >
         {isAssistant ? (
           <Bot className="h-4 w-4" />
         ) : (
           <User className="h-4 w-4" />
         )}
-      </div>
+      </motion.div>
 
       {/* Message content */}
       <div
@@ -53,22 +56,30 @@ export function Message({ message, isLast }: MessageProps) {
         )}
       >
         {/* Message bubble */}
-        <div
+        <motion.div
           className={cn(
-            "rounded-2xl px-4 py-2.5",
+            "rounded-2xl px-4 py-2.5 transition-all duration-300",
             isAssistant && "bg-muted rounded-tl-sm",
-            isUser && "bg-primary text-primary-foreground rounded-tr-sm"
+            isUser && "bg-primary text-primary-foreground rounded-tr-sm",
+            shadows.soft
           )}
+          whileHover={{
+            y: -2,
+            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
+          }}
         >
           <MessageContent
             content={message.content}
             isUser={isUser}
           />
-        </div>
+        </motion.div>
 
         {/* Metadata badges */}
-        {isAssistant && (message.is_cached || message.judge_result) && (
+        {isAssistant && (message.current_agent || message.is_cached || message.judge_result) && (
           <div className="flex items-center gap-2 px-1">
+            {message.current_agent && (
+              <AgentBadge agent={message.current_agent} />
+            )}
             {message.is_cached && (
               <Badge variant="secondary" className="text-xs">
                 Cached

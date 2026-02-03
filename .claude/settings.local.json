@@ -3,7 +3,13 @@
     "allow": [
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.langchain.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(python database.py:*)",
+      "Bash(chmod:*)",
+      "Bash(python -m py_compile:*)"
     ]
   }
 }

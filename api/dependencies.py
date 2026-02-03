@@ -24,3 +24,11 @@ def get_current_admin(request: Request) -> dict:
     if not user.get("is_admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return user
+
+
+def get_current_superadmin(request: Request) -> dict:
+    """Ensure the current user is a superadmin."""
+    user = get_current_user(request)
+    if not user.get("is_superadmin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Superadmin access required")
+    return user

@@ -9,9 +9,16 @@ export interface ChatResponse {
 }
 
 interface ApiMessage {
+  id?: string;
   message_id?: number;
   role: "user" | "assistant" | "system";
   content: string;
+  timestamp?: string;
+  created_at?: string;
+  is_cached?: boolean;
+  judge_result?: JudgeResult | null;
+  current_agent?: string;
+  handoff_count?: number;
   metadata?: Record<string, unknown>;
 }
 
@@ -33,12 +40,14 @@ function transformConversation(api: ApiConversation): Conversation {
     updated_at: api.last_activity,
     message_count: api.message_count,
     messages: api.messages?.map((m, idx) => ({
-      id: String(m.message_id || idx),
+      id: m.id || String(m.message_id || idx),
       role: m.role,
       content: m.content,
-      timestamp: new Date().toISOString(),
-      is_cached: (m.metadata?.is_cached as boolean) || false,
-      judge_result: m.metadata?.judge_result as JudgeResult | null,
+      timestamp: m.timestamp || m.created_at || new Date().toISOString(),
+      is_cached: m.is_cached || (m.metadata?.is_cached as boolean) || false,
+      judge_result: m.judge_result || (m.metadata?.judge_result as JudgeResult | null),
+      current_agent: m.current_agent || (m.metadata?.current_agent as string),
+      handoff_count: m.handoff_count || (m.metadata?.handoff_count as number),
     })),
   };
 }
@@ -75,7 +84,10 @@ export const chatService = {
     const response = await api.get<ApiConversation>(
       `/api/chat/conversations/${conversationId}`
     );
-    return transformConversation(response.data);
+    console.log('API Response for conversation', conversationId, ':', response.data);
+    const transformed = transformConversation(response.data);
+    console.log('Transformed conversation:', transformed);
+    return transformed;
   },
 
   async deleteConversation(conversationId: string): Promise<void> {

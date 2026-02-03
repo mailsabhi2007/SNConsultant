@@ -99,7 +99,7 @@ def get_user(user_id: str) -> Optional[Dict[str, Any]]:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT user_id, username, email, is_admin, created_at, last_login, is_active
+            SELECT user_id, username, email, is_admin, is_superadmin, created_at, last_login, is_active
             FROM users WHERE user_id = ?
         """, (user_id,))
 
@@ -112,9 +112,10 @@ def get_user(user_id: str) -> Optional[Dict[str, Any]]:
             'username': row[1],
             'email': row[2],
             'is_admin': bool(row[3]),
-            'created_at': row[4],
-            'last_login': row[5],
-            'is_active': bool(row[6])
+            'is_superadmin': bool(row[4]),
+            'created_at': row[5],
+            'last_login': row[6],
+            'is_active': bool(row[7])
         }
 
 
@@ -124,7 +125,7 @@ def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT user_id, username, email, is_admin, created_at, last_login, is_active
+            SELECT user_id, username, email, is_admin, is_superadmin, created_at, last_login, is_active
             FROM users WHERE username = ?
         """, (username,))
 
@@ -137,9 +138,10 @@ def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
             'username': row[1],
             'email': row[2],
             'is_admin': bool(row[3]),
-            'created_at': row[4],
-            'last_login': row[5],
-            'is_active': bool(row[6])
+            'is_superadmin': bool(row[4]),
+            'created_at': row[5],
+            'last_login': row[6],
+            'is_active': bool(row[7])
         }
 
 

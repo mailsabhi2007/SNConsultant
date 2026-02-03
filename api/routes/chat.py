@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from api.dependencies import get_current_user
 from api.models.chat import ChatRequest, ChatResponse, ConversationSummary, ConversationDetail
 from api.services.agent_service import send_message
+from api.services.multi_agent_service import send_multi_agent_message
 from api.services.auth_service import verify_access_token
 from api.services.session_service import get_or_create_session, track_prompt
 from history_manager import list_user_conversations, get_conversation, get_conversation_messages
@@ -23,7 +24,10 @@ async def post_message(
     response: Response,
     current_user: dict = Depends(get_current_user)
 ) -> ChatResponse:
-    """Send a message to the agent."""
+    """Send a message to the agent.
+
+    Automatically routes to multi-agent system if enabled for user via feature flag.
+    """
     # Get or create session for tracking
     session_id = request.cookies.get("session_id")
     session_id = get_or_create_session(current_user["user_id"], session_id)
@@ -41,6 +45,42 @@ async def post_message(
     track_prompt(session_id)
 
     result = await send_message(
+        message=payload.message,
+        user_id=current_user["user_id"],
+        conversation_id=payload.conversation_id,
+    )
+    return ChatResponse(**result)
+
+
+@router.post("/multi-agent/message", response_model=ChatResponse)
+async def post_multi_agent_message(
+    payload: ChatRequest,
+    request: Request,
+    response: Response,
+    current_user: dict = Depends(get_current_user)
+) -> ChatResponse:
+    """Send a message to the multi-agent system (direct access for testing/admin).
+
+    This endpoint always uses the multi-agent system, bypassing the feature flag.
+    Useful for testing and admin preview.
+    """
+    # Get or create session for tracking
+    session_id = request.cookies.get("session_id")
+    session_id = get_or_create_session(current_user["user_id"], session_id)
+
+    # Set session cookie
+    response.set_cookie(
+        key="session_id",
+        value=session_id,
+        httponly=True,
+        samesite="lax",
+        max_age=1800  # 30 minutes
+    )
+
+    # Track the prompt
+    track_prompt(session_id)
+
+    result = await send_multi_agent_message(
         message=payload.message,
         user_id=current_user["user_id"],
         conversation_id=payload.conversation_id,

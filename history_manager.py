@@ -216,16 +216,31 @@ def get_conversation_messages(conversation_id: int) -> List[Dict[str, Any]]:
         for row in cursor.fetchall():
             tool_calls = json.loads(row[3]) if row[3] else None
             metadata = json.loads(row[4]) if row[4] else None
-            
-            messages.append({
-                'message_id': row[0],
+
+            # Map to frontend field names
+            msg = {
+                'id': str(row[0]),  # Frontend expects 'id' as string
+                'message_id': row[0],  # Keep for backend compatibility
                 'role': row[1],
                 'content': row[2],
                 'tool_calls': tool_calls,
-                'metadata': metadata,
-                'created_at': row[5]
-            })
-        
+                'timestamp': row[5],  # Frontend expects 'timestamp'
+                'created_at': row[5]  # Keep for backend compatibility
+            }
+
+            # Add metadata fields if present
+            if metadata:
+                if 'is_cached' in metadata:
+                    msg['is_cached'] = metadata['is_cached']
+                if 'judge_result' in metadata:
+                    msg['judge_result'] = metadata['judge_result']
+                if 'current_agent' in metadata:
+                    msg['current_agent'] = metadata['current_agent']
+                if 'handoff_count' in metadata:
+                    msg['handoff_count'] = metadata['handoff_count']
+
+            messages.append(msg)
+
         return messages
 
 

@@ -26,7 +26,7 @@ def login(payload: LoginRequest, response: Response) -> UserResponse:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     token = create_access_token(
-        {"user_id": user["user_id"], "username": user["username"], "is_admin": user["is_admin"]},
+        {"user_id": user["user_id"], "username": user["username"], "is_admin": user["is_admin"], "is_superadmin": user.get("is_superadmin", False)},
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     response.set_cookie(
@@ -47,7 +47,7 @@ def register(payload: RegisterRequest) -> UserResponse:
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
-    return UserResponse(user_id=user_id, username=payload.username, email=payload.email, is_admin=False)
+    return UserResponse(user_id=user_id, username=payload.username, email=payload.email, is_admin=False, is_superadmin=False)
 
 
 @router.post("/logout")

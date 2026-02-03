@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import {
   Loader2,
   Users,
@@ -15,11 +16,16 @@ import {
   Plus,
   X,
   RefreshCw,
+  GitBranch,
+  Shield,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { animations } from "@/lib/animations";
+import { shadows, patterns } from "@/lib/visualEffects";
 import {
   Table,
   TableBody,
@@ -54,6 +60,9 @@ import {
   UserPrompt,
   TavilyConfig,
 } from "@/services/admin";
+import { MultiAgentManagement } from "@/components/admin/MultiAgentManagement";
+import { SuperadminSettings } from "@/components/admin/SuperadminSettings";
+import { useAuth } from "@/hooks/useAuth";
 
 interface StatCardProps {
   title: string;
@@ -65,28 +74,56 @@ interface StatCardProps {
 
 function StatCard({ title, value, description, icon, trend }: StatCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className="text-muted-foreground">{icon}</div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
-        {trend && (
-          <div className="flex items-center gap-1 mt-2 text-xs text-green-600">
-            <TrendingUp className="h-3 w-3" />
-            {trend}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <motion.div
+      {...animations.fadeInUp}
+      whileHover={{
+        y: -4,
+        boxShadow: "0 12px 30px rgba(0, 0, 0, 0.12)",
+      }}
+      transition={{ duration: 0.2 }}
+    >
+      <Card className={cn("border-border/50 transition-all duration-300", shadows.soft)}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          <motion.div
+            className="text-muted-foreground"
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            {icon}
+          </motion.div>
+        </CardHeader>
+        <CardContent>
+          <motion.div
+            className="text-2xl font-bold"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+          >
+            {value}
+          </motion.div>
+          {description && (
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          )}
+          {trend && (
+            <motion.div
+              className="flex items-center gap-1 mt-2 text-xs text-green-600"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <TrendingUp className="h-3 w-3" />
+              {trend}
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
 export function AdminPage() {
+  const { user } = useAuth();
   const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null);
   const [users, setUsers] = useState<UserAnalytics[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -318,19 +355,58 @@ export function AdminPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="relative container mx-auto max-w-7xl px-4 py-8">
+      {/* Subtle background pattern */}
+      <div className={cn("absolute inset-0 opacity-20 pointer-events-none", patterns.dots)} />
+
+      <motion.div
+        className="mb-8 flex items-center justify-between relative z-10"
+        {...animations.fadeInDown}
+      >
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Admin Dashboard</h1>
           <p className="mt-1 text-muted-foreground">
-            User analytics and system monitoring
+            User analytics, multi-agent system, and configurations
           </p>
         </div>
-        <Badge variant="secondary">Admin</Badge>
-      </div>
+        <motion.div
+          className="flex items-center gap-2"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          {user?.is_superadmin && (
+            <motion.div whileHover={{ scale: 1.05 }}>
+              <Badge variant="destructive"><Shield className="h-3 w-3 mr-1" />Superadmin</Badge>
+            </motion.div>
+          )}
+          <motion.div whileHover={{ scale: 1.05 }}>
+            <Badge variant="secondary">Admin</Badge>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
-      {/* Analytics Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <Tabs defaultValue="overview" className="w-full relative z-10">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="multi-agent" className="flex items-center gap-2">
+            <GitBranch className="h-4 w-4" />
+            Multi-Agent
+          </TabsTrigger>
+          {user?.is_superadmin && (
+            <TabsTrigger value="superadmin" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Superadmin
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-6 space-y-8">
+          {/* Analytics Grid */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Users"
           value={analytics.total_users}
@@ -632,6 +708,18 @@ export function AdminPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="multi-agent" className="mt-6">
+          <MultiAgentManagement />
+        </TabsContent>
+
+        {user?.is_superadmin && (
+          <TabsContent value="superadmin" className="mt-6">
+            <SuperadminSettings />
+          </TabsContent>
+        )}
+      </Tabs>
 
       {/* User Details Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>

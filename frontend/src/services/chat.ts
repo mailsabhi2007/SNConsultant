@@ -6,6 +6,8 @@ export interface ChatResponse {
   conversation_id: string;
   is_cached: boolean;
   judge_result?: JudgeResult | null;
+  current_agent?: string;
+  handoff_count?: number;
 }
 
 interface ApiMessage {
@@ -62,6 +64,8 @@ export const chatService = {
       conversation_id: number | null;
       is_cached: boolean;
       judge_result?: JudgeResult | null;
+      current_agent?: string;
+      handoff_count?: number;
     }>("/api/chat/message", {
       message,
       conversation_id: conversationId ? parseInt(conversationId) : undefined,
@@ -72,6 +76,8 @@ export const chatService = {
       conversation_id: String(response.data.conversation_id),
       is_cached: response.data.is_cached,
       judge_result: response.data.judge_result,
+      current_agent: response.data.current_agent,
+      handoff_count: response.data.handoff_count,
     };
   },
 

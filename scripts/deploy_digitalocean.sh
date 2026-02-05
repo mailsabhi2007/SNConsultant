@@ -48,7 +48,7 @@ fi
 if [ -d "$APP_DIR" ]; then
     print_info "Updating existing repository..."
     cd "$APP_DIR"
-    git pull origin master
+    git pull origin main
     print_success "Repository updated"
 else
     print_info "Cloning repository..."

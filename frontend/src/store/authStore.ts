@@ -6,6 +6,7 @@ export interface User {
   username: string;
   email?: string | null;
   is_admin: boolean;
+  is_superadmin?: boolean;
 }
 
 interface AuthState {

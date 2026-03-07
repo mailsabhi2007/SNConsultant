@@ -127,8 +127,8 @@ jobs:
   llm-quality:
     name: LLM Quality Tests
     runs-on: ubuntu-latest
-    # Only run on main branch pushes or the weekly schedule
-    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'
+    # Only run on the weekly schedule — never on push (saves LLM tokens)
+    if: github.event_name == 'schedule'
 
     steps:
       - uses: actions/checkout@v4

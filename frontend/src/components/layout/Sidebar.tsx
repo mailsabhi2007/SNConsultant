@@ -152,6 +152,7 @@ export function Sidebar() {
                 size="icon"
                 className="h-6 w-6 text-muted-foreground hover:text-foreground"
                 onClick={() => handleNavigate(ROUTES.CHAT)}
+                data-testid="new-conversation-btn"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="sr-only">New conversation</span>

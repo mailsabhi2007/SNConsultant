@@ -53,6 +53,7 @@ export function ChatContainer({ className }: ChatContainerProps) {
     streamingContent,
     sendMessage,
     cancel,
+    error,
   } = useChat();
 
   const [showPanel, setShowPanel] = useState(true);
@@ -215,6 +216,11 @@ export function ChatContainer({ className }: ChatContainerProps) {
         {/* Input area */}
         <div className="border-t border-white/[0.06] bg-card/10 backdrop-blur-xl px-6 py-4 shrink-0">
           <div className="mx-auto max-w-3xl">
+            {error && (
+              <p className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
             <div className="relative rounded-xl glass-glow focus-within:border-primary/30 focus-within:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_0_0_1px_rgba(148,197,233,0.15),0_12px_40px_-8px_rgba(0,0,0,0.4)] transition-all">
               <ChatInput
                 onSubmit={sendMessage}

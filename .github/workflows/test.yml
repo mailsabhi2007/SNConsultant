@@ -38,6 +38,7 @@ jobs:
                  tests/integration/test_api_admin.py \
                  --html=test-reports/api-report.html \
                  --self-contained-html \
+                 --no-cov \
                  -v
         env:
           # Fake keys so the app initialises without errors
@@ -149,6 +150,7 @@ jobs:
                  -m llm_quality \
                  --html=test-reports/llm-quality-report.html \
                  --self-contained-html \
+                 --no-cov \
                  -v \
                  --timeout=120
         env:

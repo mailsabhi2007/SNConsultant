@@ -67,6 +67,7 @@ export function Header() {
           size="sm"
           className="gap-2"
           onClick={handleNewChat}
+          data-testid="new-chat-btn"
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">New Chat</span>

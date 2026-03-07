@@ -33,8 +33,8 @@ test("new conversation button clears the message list", async ({ page }) => {
   await page.getByPlaceholder(/ask anything/i).press("Enter");
   await page.waitForTimeout(2_000);
 
-  // Click new conversation (sidebar button — disambiguated by data-testid)
-  await page.locator('[data-testid="new-conversation-btn"]').click();
+  // Click "New Chat" in the header — this calls newConversation() which clears state
+  await page.locator('[data-testid="new-chat-btn"]').click();
 
   // Input should be empty and no messages visible
   await expect(page.getByPlaceholder(/ask anything/i)).toHaveValue("");

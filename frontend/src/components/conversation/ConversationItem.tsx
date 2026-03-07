@@ -29,6 +29,7 @@ export function ConversationItem({
 
   return (
     <button
+      data-testid="conversation-item"
       onClick={onSelect}
       onMouseEnter={() => setShowMenu(true)}
       onMouseLeave={() => setShowMenu(false)}

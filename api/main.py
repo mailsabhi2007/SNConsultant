@@ -3,13 +3,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import auth, chat, knowledge_base, settings, admin
+from api.routes import auth, chat, knowledge_base, settings, admin, credits
 from database import init_database
 
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
-    app = FastAPI(title="ServiceNow Consultant API", version="1.5.0")
+    app = FastAPI(title="Pragma AI API", version="1.5.0")
 
     origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
     app.add_middleware(
@@ -25,6 +25,7 @@ def create_app() -> FastAPI:
     app.include_router(knowledge_base.router, prefix="/api/kb", tags=["knowledge_base"])
     app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
     app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+    app.include_router(credits.router, prefix="/api/credits", tags=["credits"])
 
     return app
 

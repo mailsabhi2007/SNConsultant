@@ -268,6 +268,108 @@ def init_database():
             )
         """)
 
+        # Credit rate config — per-model pricing (admin-editable)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS credit_rate_config (
+                model TEXT PRIMARY KEY,
+                display_name TEXT NOT NULL,
+                credits_per_1k_input_tokens REAL NOT NULL,
+                credits_per_1k_output_tokens REAL NOT NULL,
+                api_cost_per_1k_input_usd REAL NOT NULL,
+                api_cost_per_1k_output_usd REAL NOT NULL,
+                typical_input_ratio REAL DEFAULT 0.70,
+                is_active BOOLEAN DEFAULT 1,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Seed default model pricing — INSERT OR IGNORE so admin edits are preserved
+        # typical_input_ratio tuned per actual usage pattern:
+        #   claude-sonnet: 0.65 (long system prompt + KB context input, medium output)
+        #   claude-haiku:  0.85 (title generation — very long prompt, tiny 5-word output)
+        #   gpt-4o:        0.70 (general purpose default)
+        #   gpt-4o-mini:   0.80 (judge — full query+response as input, small JSON output)
+        default_models = [
+            ("claude-sonnet-4-20250514",  "Claude Sonnet 4.5", 5.0,  20.0, 0.003,  0.015,  0.65),
+            ("claude-3-5-haiku-20241022", "Claude Haiku 3.5",  1.0,   4.0, 0.0008, 0.004,  0.85),
+            ("gpt-4o",                    "GPT-4o",            5.0,  20.0, 0.0025, 0.010,  0.70),
+            ("gpt-4o-mini",               "GPT-4o mini",       1.0,   3.0, 0.00015,0.0006, 0.80),
+        ]
+        cursor.executemany("""
+            INSERT OR IGNORE INTO credit_rate_config
+            (model, display_name, credits_per_1k_input_tokens, credits_per_1k_output_tokens,
+             api_cost_per_1k_input_usd, api_cost_per_1k_output_usd, typical_input_ratio)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, default_models)
+
+        # Migration: fix haiku model name (was incorrectly seeded as claude-haiku-4-5-20251001;
+        # history_manager.py hardcodes claude-3-5-haiku-20241022)
+        cursor.execute("""
+            INSERT OR IGNORE INTO credit_rate_config
+            (model, display_name, credits_per_1k_input_tokens, credits_per_1k_output_tokens,
+             api_cost_per_1k_input_usd, api_cost_per_1k_output_usd, typical_input_ratio)
+            VALUES ('claude-3-5-haiku-20241022', 'Claude Haiku 3.5', 1.0, 4.0, 0.0008, 0.004, 0.85)
+        """)
+        cursor.execute("""
+            UPDATE credit_rate_config SET is_active = 0
+            WHERE model = 'claude-haiku-4-5-20251001'
+        """)
+
+        # Migration: update typical_input_ratio for existing rows that still have the old 0.70 default
+        cursor.execute("""
+            UPDATE credit_rate_config SET typical_input_ratio = 0.65
+            WHERE model = 'claude-sonnet-4-20250514' AND typical_input_ratio = 0.70
+        """)
+        cursor.execute("""
+            UPDATE credit_rate_config SET typical_input_ratio = 0.80
+            WHERE model = 'gpt-4o-mini' AND typical_input_ratio = 0.70
+        """)
+        cursor.execute("""
+            UPDATE credit_rate_config SET typical_input_ratio = 0.85
+            WHERE model = 'claude-3-5-haiku-20241022' AND typical_input_ratio = 0.70
+        """)
+
+        # Credit transactions — immutable ledger, never UPDATE/DELETE
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS credit_transactions (
+                txn_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                type TEXT NOT NULL CHECK(type IN ('grant','debit','refund')),
+                description TEXT,
+                ref_message_id TEXT,
+                tokens_input INTEGER,
+                tokens_output INTEGER,
+                model TEXT,
+                granted_by TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            )
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_credit_txn_user
+            ON credit_transactions(user_id)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_credit_txn_created
+            ON credit_transactions(created_at)
+        """)
+
+        # Credit packages — future Stripe integration, seeded empty
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS credit_packages (
+                package_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                credits INTEGER NOT NULL,
+                price_usd REAL NOT NULL,
+                stripe_price_id TEXT,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # Migration: Add is_superadmin column if it doesn't exist
         cursor.execute("PRAGMA table_info(users)")
         columns = [col[1] for col in cursor.fetchall()]

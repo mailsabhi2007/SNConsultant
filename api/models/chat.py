@@ -15,6 +15,8 @@ class ChatResponse(BaseModel):
     conversation_id: Optional[int] = None
     is_cached: bool = False
     judge_result: Optional[Dict[str, Any]] = None
+    credits_used: Optional[int] = None
+    credits_remaining: Optional[int] = None
 
 
 class ConversationSummary(BaseModel):

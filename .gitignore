@@ -3,6 +3,15 @@
 .env.local
 .env.*.local
 
+# Claude Code local settings
+.claude/settings.local.json
+
+# Test result artifacts
+test-results/
+test-reports/
+frontend/test-results/
+frontend/playwright-report/
+
 # Python
 __pycache__/
 *.py[cod]

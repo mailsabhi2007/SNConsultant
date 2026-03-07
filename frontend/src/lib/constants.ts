@@ -1,4 +1,4 @@
-export const APP_NAME = "ServiceNow Consultant";
+export const APP_NAME = "Pragma AI";
 
 export const ROUTES = {
   HOME: "/",

@@ -15,6 +15,8 @@ export interface Message {
   isStreaming?: boolean;
   current_agent?: string;
   handoff_count?: number;
+  handoff_from?: string;
+  credits_used?: number;
 }
 
 export interface JudgeResult {

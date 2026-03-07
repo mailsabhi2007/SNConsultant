@@ -285,7 +285,21 @@ class MultiAgentOrchestrator:
 
         # Create initial state
         state = create_initial_state(user_id=self.user_id, conversation_id=conversation_id)
-        state["messages"] = [HumanMessage(content=message)]
+
+        # Load prior conversation history so agents have full context across turns.
+        # We just saved the current user message to DB, so history[:-1] excludes it.
+        prior_messages = []
+        if conversation_id:
+            from history_manager import get_conversation_messages
+            history = get_conversation_messages(conversation_id)
+            # Keep at most the last 20 stored messages (10 turns) to stay within context limits
+            for msg in history[-21:-1]:
+                if msg["role"] == "user":
+                    prior_messages.append(HumanMessage(content=msg["content"]))
+                elif msg["role"] == "assistant":
+                    prior_messages.append(AIMessage(content=msg["content"]))
+
+        state["messages"] = prior_messages + [HumanMessage(content=message)]
 
         # Invoke graph
         print(f"[MULTI-AGENT] Invoking multi-agent graph")

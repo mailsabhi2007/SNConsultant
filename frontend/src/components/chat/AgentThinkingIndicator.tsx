@@ -54,7 +54,7 @@ const THINKING_MESSAGES = {
     "Evaluating complexity...",
   ],
   consultant: [
-    "Consulting ServiceNow documentation...",
+    "Consulting platform documentation...",
     "Researching best practices...",
     "Checking internal guidelines...",
     "Analyzing your requirements...",
@@ -78,7 +78,7 @@ const THINKING_MESSAGES = {
 };
 
 const TOOL_ACTIVITIES = {
-  consult_public_docs: { icon: Search, message: "Searching ServiceNow docs..." },
+  consult_public_docs: { icon: Search, message: "Searching public docs..." },
   consult_user_context: { icon: FileText, message: "Checking your guidelines..." },
   check_live_instance: { icon: Database, message: "Connecting to your instance..." },
   check_table_schema: { icon: Database, message: "Checking table schema..." },

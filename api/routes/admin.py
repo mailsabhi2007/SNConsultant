@@ -5,6 +5,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.dependencies import get_current_admin, get_current_superadmin
+from api.services.credit_service import (
+    get_all_user_balances,
+    grant_credits,
+    get_transaction_history,
+    get_rate_config,
+    upsert_rate_config,
+    get_cost_estimate_for_credits,
+)
+from api.models.credits import (
+    GrantCreditsRequest,
+    UpdateRateConfigRequest,
+    UserCreditBalance,
+    CostEstimateResponse,
+    CreditTransaction,
+)
 from api.models.admin import AdminStatsResponse
 from database import get_database_stats, get_db_connection
 from knowledge_base import get_knowledge_base_stats
@@ -454,6 +469,80 @@ def update_config(
         "config_key": config_key,
         "message": f"Configuration '{config_key}' updated"
     }
+
+
+# ── Credit Management Endpoints ────────────────────────────────────────────────
+
+@router.get("/credits/overview", response_model=list[UserCreditBalance])
+def credits_overview(current_user: dict = Depends(get_current_admin)) -> list[UserCreditBalance]:
+    """All users with current credit balances."""
+    return [UserCreditBalance(**u) for u in get_all_user_balances()]
+
+
+@router.post("/credits/assign")
+def assign_credits(
+    payload: GrantCreditsRequest,
+    current_user: dict = Depends(get_current_superadmin),
+) -> dict:
+    """Grant credits to a user (superadmin only)."""
+    result = grant_credits(
+        user_id=payload.user_id,
+        amount=payload.amount,
+        description=payload.description or "Admin grant",
+        granted_by=current_user["user_id"],
+    )
+    return {"status": "ok", "txn_id": result["txn_id"], "new_balance": result["balance"]}
+
+
+@router.get("/credits/history/{user_id}")
+def user_credit_history(
+    user_id: str,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_admin),
+) -> dict:
+    """Transaction history for a specific user."""
+    txns = get_transaction_history(user_id, limit=limit)
+    return {"transactions": txns, "total": len(txns)}
+
+
+@router.get("/credits/rates")
+def credit_rates(current_user: dict = Depends(get_current_admin)) -> dict:
+    """Current model rate configuration."""
+    return {"rates": get_rate_config()}
+
+
+@router.put("/credits/rates")
+def update_credit_rates(
+    payload: UpdateRateConfigRequest,
+    current_user: dict = Depends(get_current_superadmin),
+) -> dict:
+    """Update model rate configuration (superadmin only)."""
+    for entry in payload.rates:
+        upsert_rate_config(
+            model=entry.model,
+            display_name=entry.display_name,
+            credits_per_1k_input_tokens=entry.credits_per_1k_input_tokens,
+            credits_per_1k_output_tokens=entry.credits_per_1k_output_tokens,
+            api_cost_per_1k_input_usd=entry.api_cost_per_1k_input_usd,
+            api_cost_per_1k_output_usd=entry.api_cost_per_1k_output_usd,
+            typical_input_ratio=entry.typical_input_ratio,
+            is_active=entry.is_active,
+        )
+    return {"status": "ok", "updated": len(payload.rates)}
+
+
+@router.get("/credits/cost-estimate", response_model=CostEstimateResponse)
+def cost_estimate(
+    credits: int,
+    current_user: dict = Depends(get_current_admin),
+) -> CostEstimateResponse:
+    """Return estimated API cost for a given credit amount, per model."""
+    if credits <= 0:
+        raise HTTPException(status_code=400, detail="credits must be > 0")
+    return CostEstimateResponse(**get_cost_estimate_for_credits(credits))
+
+
+# ── End Credit Endpoints ────────────────────────────────────────────────────────
 
 
 def _get_default_prompt(agent_name: str) -> str:

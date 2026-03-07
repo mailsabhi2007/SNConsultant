@@ -1,5 +1,6 @@
 import api from "./api";
 import type { Conversation, Message, JudgeResult } from "@/types";
+import { useCreditStore } from "@/stores/creditStore";
 
 export interface ChatResponse {
   response: string;
@@ -8,6 +9,8 @@ export interface ChatResponse {
   judge_result?: JudgeResult | null;
   current_agent?: string;
   handoff_count?: number;
+  credits_used?: number;
+  credits_remaining?: number;
 }
 
 interface ApiMessage {
@@ -21,6 +24,7 @@ interface ApiMessage {
   judge_result?: JudgeResult | null;
   current_agent?: string;
   handoff_count?: number;
+  handoff_from?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -50,6 +54,8 @@ function transformConversation(api: ApiConversation): Conversation {
       judge_result: m.judge_result || (m.metadata?.judge_result as JudgeResult | null),
       current_agent: m.current_agent || (m.metadata?.current_agent as string),
       handoff_count: m.handoff_count || (m.metadata?.handoff_count as number),
+      handoff_from: m.handoff_from || (m.metadata?.handoff_from as string),
+      credits_used: m.metadata?.credits_used as number | undefined,
     })),
   };
 }
@@ -66,10 +72,17 @@ export const chatService = {
       judge_result?: JudgeResult | null;
       current_agent?: string;
       handoff_count?: number;
+      credits_used?: number;
+      credits_remaining?: number;
     }>("/api/chat/message", {
       message,
       conversation_id: conversationId ? parseInt(conversationId) : undefined,
     });
+
+    // Update global credit balance immediately after each response
+    if (response.data.credits_remaining !== undefined) {
+      useCreditStore.getState().setBalance(response.data.credits_remaining);
+    }
 
     return {
       response: response.data.response,
@@ -78,6 +91,8 @@ export const chatService = {
       judge_result: response.data.judge_result,
       current_agent: response.data.current_agent,
       handoff_count: response.data.handoff_count,
+      credits_used: response.data.credits_used,
+      credits_remaining: response.data.credits_remaining,
     };
   },
 

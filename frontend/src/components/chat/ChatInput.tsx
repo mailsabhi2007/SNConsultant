@@ -20,7 +20,7 @@ export function ChatInput({
   onCancel,
   isLoading = false,
   disabled = false,
-  placeholder = "Ask about ServiceNow...",
+  placeholder = "Ask anything...",
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -65,14 +65,9 @@ export function ChatInput({
     <motion.div className="relative" {...animations.fadeInUp}>
       <motion.div
         className={cn(
-          "flex items-end gap-2 rounded-2xl border bg-background p-2 transition-all duration-300",
-          shadows.soft,
-          "focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
+          "flex items-end gap-2 p-2 transition-all duration-300",
           disabled && "opacity-50"
         )}
-        whileFocus={{
-          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.12)",
-        }}
       >
         <Textarea
           ref={textareaRef}
@@ -137,16 +132,6 @@ export function ChatInput({
         </AnimatePresence>
       </motion.div>
 
-      {/* Keyboard shortcut hint */}
-      <motion.p
-        className="mt-2 text-center text-xs text-muted-foreground"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        Press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd> to send,{" "}
-        <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Shift+Enter</kbd> for new line
-      </motion.p>
     </motion.div>
   );
 }

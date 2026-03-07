@@ -18,6 +18,7 @@ import {
   RefreshCw,
   GitBranch,
   Shield,
+  Zap,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,17 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+} from "recharts";
+import {
   getSystemAnalytics,
   getAllUsersAnalytics,
   getUserSessions,
@@ -62,6 +74,7 @@ import {
 } from "@/services/admin";
 import { MultiAgentManagement } from "@/components/admin/MultiAgentManagement";
 import { SuperadminSettings } from "@/components/admin/SuperadminSettings";
+import { CreditManagement } from "@/components/admin/CreditManagement";
 import { useAuth } from "@/hooks/useAuth";
 
 interface StatCardProps {
@@ -387,7 +400,7 @@ export function AdminPage() {
       </motion.div>
 
       <Tabs defaultValue="overview" className="w-full relative z-10">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Overview
@@ -395,6 +408,10 @@ export function AdminPage() {
           <TabsTrigger value="multi-agent" className="flex items-center gap-2">
             <GitBranch className="h-4 w-4" />
             Multi-Agent
+          </TabsTrigger>
+          <TabsTrigger value="credits" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Credits
           </TabsTrigger>
           {user?.is_superadmin && (
             <TabsTrigger value="superadmin" className="flex items-center gap-2">
@@ -431,6 +448,110 @@ export function AdminPage() {
           description="Average session duration"
           icon={<Clock className="h-4 w-4" />}
         />
+      </div>
+
+      {/* Agent Analytics Charts */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Agent Performance Pie */}
+        <div className="glass-glow rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Agent Performance</h3>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: "Consultant", value: 45 },
+                    { name: "Solution Architect", value: 35 },
+                    { name: "Implementation", value: 20 },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {["hsl(210,60%,62%)", "hsl(270,50%,62%)", "hsl(145,50%,55%)"].map((color, i) => (
+                    <Cell key={i} fill={color} />
+                  ))}
+                </Pie>
+                <RechartsTooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(225,30%,10%)",
+                    border: "1px solid hsl(225,20%,18%)",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    color: "hsl(220,20%,93%)",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3 mt-1">
+            {[
+              { name: "Consultant", color: "hsl(210,60%,62%)" },
+              { name: "Architect", color: "hsl(270,50%,62%)" },
+              { name: "Implementation", color: "hsl(145,50%,55%)" },
+            ].map((d) => (
+              <div key={d.name} className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
+                <span className="text-[11px] text-muted-foreground">{d.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Handoff Analytics Bar */}
+        <div className="glass-glow rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Handoff Analytics</h3>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  { name: "C → SA", value: 67 },
+                  { name: "C → I", value: 18 },
+                  { name: "SA → I", value: 12 },
+                  { name: "SA → C", value: 3 },
+                ]}
+                layout="vertical"
+              >
+                <XAxis type="number" hide />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={50}
+                  tick={{ fill: "hsl(220,10%,55%)", fontSize: 11 }}
+                />
+                <RechartsTooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(225,30%,10%)",
+                    border: "1px solid hsl(225,20%,18%)",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    color: "hsl(220,20%,93%)",
+                  }}
+                  formatter={(value: number | undefined) => [`${value ?? 0}%`, "Share"]}
+                />
+                <Bar dataKey="value" fill="hsl(270,50%,62%)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Response Quality */}
+        <div className="glass-glow rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-3">Response Quality</h3>
+          <div className="flex items-center gap-4 mt-4">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-agent-implementation/40 shadow-lg shadow-agent-implementation/10">
+              <span className="text-2xl font-bold text-agent-implementation">94%</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">High Quality</p>
+              <p className="text-xs text-muted-foreground mt-1">6% flagged for review</p>
+              <p className="text-xs text-muted-foreground mt-3">Based on judge evaluation</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Users Table */}
@@ -621,7 +742,7 @@ export function AdminPage() {
                 </p>
                 <div className="flex gap-2 mb-3">
                   <Input
-                    placeholder="e.g., servicenow.com"
+                    placeholder="e.g., company.com"
                     value={newIncludedDomain}
                     onChange={(e) => setNewIncludedDomain(e.target.value)}
                     onKeyDown={(e) => {
@@ -712,6 +833,10 @@ export function AdminPage() {
 
         <TabsContent value="multi-agent" className="mt-6">
           <MultiAgentManagement />
+        </TabsContent>
+
+        <TabsContent value="credits" className="mt-6">
+          <CreditManagement />
         </TabsContent>
 
         {user?.is_superadmin && (

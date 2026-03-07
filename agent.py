@@ -11,9 +11,14 @@ from tools import fetch_recent_changes, check_table_schema, get_error_logs, save
 from servicenow_client import ServiceNowClient
 from knowledge_base import query_knowledge_base
 from servicenow_tools import get_public_knowledge_tool
+import os
 from user_config import get_system_config
 from semantic_cache import check_cache, store_cache
 from llm_judge import get_judge
+
+# Semantic cache is disabled by default.
+# Set SEMANTIC_CACHE_ENABLED=true in the environment to re-enable after tuning.
+_SEMANTIC_CACHE_ENABLED = os.getenv("SEMANTIC_CACHE_ENABLED", "false").lower() == "true"
 from history_manager import (
     create_conversation, add_message, get_conversation_messages,
     get_conversation, update_conversation_title, generate_conversation_title
@@ -242,13 +247,11 @@ class ServiceNowAgent:
             effective_user_id = self.user_id
         
         cached_response = None
-        if user_message and effective_user_id:
-            # Use lower threshold for exact matches (0.75) but still check for high similarity
-            # First try exact match threshold (0.95), then fall back to semantic similarity (0.75)
+        if _SEMANTIC_CACHE_ENABLED and user_message and effective_user_id:
             cached_response = check_cache(
                 query=user_message,
                 user_id=effective_user_id,
-                similarity_threshold=0.75,  # Lower threshold for better cache hits
+                similarity_threshold=0.75,
                 model_name=self.model_name,
                 temperature=0
             )
@@ -355,14 +358,26 @@ class ServiceNowAgent:
             # Ensure user_id is in state (use agent's user_id if state doesn't have it)
             if "user_id" not in state or not state.get("user_id"):
                 state["user_id"] = self.user_id
-        
+
         # Use user_id from state if available, otherwise use self.user_id
         effective_user_id = state.get("user_id") or self.user_id
-        
+
         # Create conversation if needed
         if not conversation_id and effective_user_id:
             conversation_id = create_conversation(effective_user_id)
             state["conversation_id"] = conversation_id
+
+        # Load prior conversation history for continuity across turns.
+        # Only inject when state was freshly created (no prior messages beyond system prompt).
+        if conversation_id and len(state["messages"]) == 1:
+            history = get_conversation_messages(conversation_id)
+            # Keep at most the last 20 stored messages (10 turns) to stay within context limits
+            for msg in history[-20:]:
+                if msg["role"] == "user":
+                    state["messages"].append(HumanMessage(content=msg["content"]))
+                elif msg["role"] == "assistant":
+                    state["messages"].append(AIMessage(content=msg["content"]))
+
         # Add the new human message
         state["messages"].append(HumanMessage(content=message))
         
@@ -384,9 +399,8 @@ class ServiceNowAgent:
                 assistant_response = msg.content
                 break
         
-        # Store in cache if cacheable and not from cache
-        # Use effective_user_id from state
-        if assistant_response and not result.get("is_cached") and effective_user_id:
+        # Store in cache only when semantic cache is enabled
+        if _SEMANTIC_CACHE_ENABLED and assistant_response and not result.get("is_cached") and effective_user_id:
             cache_id = store_cache(
                 query=message,
                 response=assistant_response,

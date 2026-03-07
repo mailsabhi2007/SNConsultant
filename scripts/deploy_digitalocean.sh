@@ -52,7 +52,7 @@ if [ -d "$APP_DIR" ]; then
     print_success "Repository updated"
 else
     print_info "Cloning repository..."
-    git clone https://github.com/mailsabhi2007/SNConsultant.git "$APP_DIR"
+    git clone --branch main https://github.com/mailsabhi2007/SNConsultant.git "$APP_DIR"
     cd "$APP_DIR"
     print_success "Repository cloned"
 fi

@@ -62,6 +62,7 @@ export function useChat() {
           judge_result: response.judge_result,
           current_agent: response.current_agent,
           handoff_count: response.handoff_count,
+          credits_used: response.credits_used,
         };
 
         console.log('Adding assistant message to state:', assistantMessage.id);
@@ -76,11 +77,16 @@ export function useChat() {
         console.log('Invalidating conversations query');
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
         console.log('=== SEND MESSAGE END ===');
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Send message error:', err);
         cancelStreaming();
-        const errorMessage = err instanceof Error ? err.message : "Failed to send message";
-        setError(errorMessage);
+        const axiosErr = err as { response?: { status?: number; data?: { detail?: string } } };
+        if (axiosErr?.response?.status === 402) {
+          setError("You have run out of credits. Please contact your administrator to get more.");
+        } else {
+          const errorMessage = err instanceof Error ? err.message : "Failed to send message";
+          setError(errorMessage);
+        }
       }
     },
     [isSending, addMessage, startStreaming, activeConversationId, finishStreaming, cancelStreaming, setActiveConversation, queryClient]

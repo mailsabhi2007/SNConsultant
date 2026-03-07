@@ -1,0 +1,47 @@
+[
+  {
+    "id": "business_rule_basics",
+    "query": "What is a business rule in ServiceNow and when does it run?",
+    "min_length": 100,
+    "required_keywords": ["business rule", "script", "condition"],
+    "any_of_keywords": ["insert", "update", "delete", "display", "before", "after"],
+    "max_hallucination_score": 0.5,
+    "description": "Core concept — should mention server-side execution and trigger conditions"
+  },
+  {
+    "id": "incident_vs_problem",
+    "query": "What is the difference between an Incident and a Problem in ServiceNow ITSM?",
+    "min_length": 120,
+    "required_keywords": ["incident", "problem"],
+    "any_of_keywords": ["root cause", "restore", "service", "workaround", "ITIL"],
+    "max_hallucination_score": 0.5,
+    "description": "ITSM fundamentals — must correctly distinguish the two concepts"
+  },
+  {
+    "id": "table_api",
+    "query": "How do I use the ServiceNow Table API to query records via REST?",
+    "min_length": 150,
+    "required_keywords": ["Table API", "REST", "GET"],
+    "any_of_keywords": ["/api/now/table", "sysparm_query", "sysparm_limit", "JSON", "endpoint"],
+    "max_hallucination_score": 0.5,
+    "description": "Technical REST API — must reference the correct API path and parameters"
+  },
+  {
+    "id": "flow_designer_basics",
+    "query": "How do I create an automated flow in Flow Designer?",
+    "min_length": 100,
+    "required_keywords": ["Flow Designer"],
+    "any_of_keywords": ["trigger", "action", "subflow", "workflow", "automation"],
+    "max_hallucination_score": 0.5,
+    "description": "Platform automation — should describe the Flow Designer interface and components"
+  },
+  {
+    "id": "acl_basics",
+    "query": "What is an ACL in ServiceNow and how does it control access?",
+    "min_length": 100,
+    "required_keywords": ["ACL", "access"],
+    "any_of_keywords": ["role", "permission", "record", "field", "condition", "script"],
+    "max_hallucination_score": 0.5,
+    "description": "Security fundamentals — must correctly explain Access Control Lists"
+  }
+]

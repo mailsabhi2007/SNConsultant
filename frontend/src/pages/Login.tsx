@@ -2,16 +2,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
-import { Loader2, Bot } from "lucide-react";
+import { Brain, User, Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
-import { animations } from "@/lib/animations";
-import { gradients, patterns, shadows } from "@/lib/visualEffects";
 import axios from "axios";
 
 const loginSchema = z.object({
@@ -28,8 +24,41 @@ const registerSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+function FloatingOrbs() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-primary/10 blur-[100px] animate-float" />
+      <div
+        className="absolute top-1/4 -right-20 h-[400px] w-[400px] rounded-full bg-agent-architect/10 blur-[100px] animate-float"
+        style={{ animationDelay: "1s" }}
+      />
+      <div
+        className="absolute -bottom-16 left-1/4 h-[450px] w-[450px] rounded-full bg-agent-consultant/[0.08] blur-[100px] animate-float"
+        style={{ animationDelay: "2s" }}
+      />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[300px] rounded-full bg-agent-orchestrator/[0.06] blur-[80px] animate-float"
+        style={{ animationDelay: "3s" }}
+      />
+      {/* Subtle grid overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(148,197,233,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(148,197,233,0.3) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(148,197,233,0.04)_0%,_transparent_70%)]" />
+    </div>
+  );
+}
+
 export function LoginPage() {
   const { login, register: registerUser } = useAuth();
+  const [activeTab, setActiveTab] = useState<"signin" | "register">("signin");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -90,176 +119,220 @@ export function LoginPage() {
   };
 
   return (
-    <div className={cn("relative flex min-h-screen items-center justify-center overflow-hidden p-4", gradients.subtlePrimary)}>
-      {/* Animated background pattern */}
-      <div className={cn("absolute inset-0 opacity-40", patterns.mesh)} />
-      <div className={cn("absolute inset-0 opacity-20", patterns.dots)} />
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <FloatingOrbs />
 
-      {/* Floating gradient orb */}
-      <motion.div
-        className={cn("absolute -top-32 -left-32 h-96 w-96 rounded-full blur-3xl opacity-20", gradients.mesh)}
-        animate={{
-          y: [0, -20, 0],
-          x: [0, 20, 0],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-
-      <motion.div
-        {...animations.fadeInScale}
-        className="w-full max-w-md relative z-10"
-      >
-        <Card className={cn("border-border/50 backdrop-blur-xl bg-background/80", shadows.medium)}>
-          <CardHeader className="space-y-4 text-center">
-            <motion.div
-              className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <Bot className="h-6 w-6 text-primary" />
-            </motion.div>
-            <div>
-              <CardTitle className="text-2xl">Welcome back</CardTitle>
-              <CardDescription className="mt-1">
-                Sign in to continue your ServiceNow consulting workflow.
-              </CardDescription>
+      <div className="relative z-10 w-full max-w-md">
+        {/* Glass card */}
+        <div className="glass-glow rounded-2xl p-8 animate-glass-breathe ring-1 ring-white/[0.06]">
+          {/* Logo */}
+          <div className="mb-8 flex flex-col items-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary animate-pulse-glow">
+              <Brain className="h-7 w-7" />
             </div>
-          </CardHeader>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Pragma AI
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your pragmatic AI consultant...
+              </p>
+            </div>
+          </div>
 
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full" onValueChange={() => setError(null)}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-                >
-                  {error}
-                </motion.div>
+          {/* Tab switcher */}
+          <div className="mb-6 flex rounded-xl glass-subtle p-1">
+            <button
+              onClick={() => { setActiveTab("signin"); setError(null); }}
+              className={cn(
+                "flex-1 rounded-lg py-2 text-sm font-medium transition-all",
+                activeTab === "signin"
+                  ? "bg-white/[0.08] text-foreground shadow-sm shadow-black/20 backdrop-blur-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => { setActiveTab("register"); setError(null); }}
+              className={cn(
+                "flex-1 rounded-lg py-2 text-sm font-medium transition-all",
+                activeTab === "register"
+                  ? "bg-white/[0.08] text-foreground shadow-sm shadow-black/20 backdrop-blur-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Register
+            </button>
+          </div>
 
-              <TabsContent value="login" className="mt-4">
-                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="login-username" className="text-sm font-medium">
-                      Username
-                    </label>
-                    <Input
-                      id="login-username"
-                      placeholder="Enter your username"
-                      {...loginForm.register("username")}
-                    />
-                    {loginForm.formState.errors.username && (
-                      <p className="text-xs text-destructive">
-                        {loginForm.formState.errors.username.message}
-                      </p>
-                    )}
-                  </div>
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
 
-                  <div className="space-y-2">
-                    <label htmlFor="login-password" className="text-sm font-medium">
-                      Password
-                    </label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="Enter your password"
-                      {...loginForm.register("password")}
-                    />
-                    {loginForm.formState.errors.password && (
-                      <p className="text-xs text-destructive">
-                        {loginForm.formState.errors.password.message}
-                      </p>
-                    )}
-                  </div>
+          {/* Sign In Form */}
+          {activeTab === "signin" && (
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="login-username" className="text-sm text-foreground/80">
+                  Username
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="login-username"
+                    placeholder="Enter your username"
+                    className="pl-10 glass-input focus:border-primary/40"
+                    disabled={isLoading}
+                    {...loginForm.register("username")}
+                  />
+                </div>
+                {loginForm.formState.errors.username && (
+                  <p className="text-xs text-destructive">{loginForm.formState.errors.username.message}</p>
+                )}
+              </div>
 
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Sign In
-                    </Button>
-                  </motion.div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="login-password" className="text-sm text-foreground/80">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    className="pl-10 pr-10 glass-input focus:border-primary/40"
+                    disabled={isLoading}
+                    {...loginForm.register("password")}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {loginForm.formState.errors.password && (
+                  <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
+                )}
+              </div>
 
-                  <p className="text-center text-xs text-muted-foreground">
-                    Your session stays active for 30 minutes.
-                  </p>
-                </form>
-              </TabsContent>
+              <Button
+                type="submit"
+                className="mt-2 w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+            </form>
+          )}
 
-              <TabsContent value="register" className="mt-4">
-                <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="register-username" className="text-sm font-medium">
-                      Username
-                    </label>
-                    <Input
-                      id="register-username"
-                      placeholder="Choose a username"
-                      {...registerForm.register("username")}
-                    />
-                    {registerForm.formState.errors.username && (
-                      <p className="text-xs text-destructive">
-                        {registerForm.formState.errors.username.message}
-                      </p>
-                    )}
-                  </div>
+          {/* Register Form */}
+          {activeTab === "register" && (
+            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="reg-username" className="text-sm text-foreground/80">
+                  Username
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="reg-username"
+                    placeholder="Choose a username"
+                    className="pl-10 glass-input focus:border-primary/40"
+                    disabled={isLoading}
+                    {...registerForm.register("username")}
+                  />
+                </div>
+                {registerForm.formState.errors.username && (
+                  <p className="text-xs text-destructive">{registerForm.formState.errors.username.message}</p>
+                )}
+              </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="register-email" className="text-sm font-medium">
-                      Email
-                    </label>
-                    <Input
-                      id="register-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      {...registerForm.register("email")}
-                    />
-                    {registerForm.formState.errors.email && (
-                      <p className="text-xs text-destructive">
-                        {registerForm.formState.errors.email.message}
-                      </p>
-                    )}
-                  </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="reg-email" className="text-sm text-foreground/80">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="reg-email"
+                    type="email"
+                    placeholder="you@company.com"
+                    className="pl-10 glass-input focus:border-primary/40"
+                    disabled={isLoading}
+                    {...registerForm.register("email")}
+                  />
+                </div>
+                {registerForm.formState.errors.email && (
+                  <p className="text-xs text-destructive">{registerForm.formState.errors.email.message}</p>
+                )}
+              </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="register-password" className="text-sm font-medium">
-                      Password
-                    </label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      placeholder="Create a password"
-                      {...registerForm.register("password")}
-                    />
-                    <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
-                    {registerForm.formState.errors.password && (
-                      <p className="text-xs text-destructive">
-                        {registerForm.formState.errors.password.message}
-                      </p>
-                    )}
-                  </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="reg-password" className="text-sm text-foreground/80">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="reg-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Create a password (min 6 chars)"
+                    className="pl-10 pr-10 glass-input focus:border-primary/40"
+                    disabled={isLoading}
+                    {...registerForm.register("password")}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {registerForm.formState.errors.password && (
+                  <p className="text-xs text-destructive">{registerForm.formState.errors.password.message}</p>
+                )}
+              </div>
 
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Create Account
-                    </Button>
-                  </motion.div>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </motion.div>
+              <Button
+                type="submit"
+                className="mt-2 w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create Account"
+                )}
+              </Button>
+            </form>
+          )}
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground/60">
+              Pragma AI · Powered by Claude
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

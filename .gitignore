@@ -11,6 +11,7 @@ test-results/
 test-reports/
 frontend/test-results/
 frontend/playwright-report/
+frontend/tests/e2e/.auth/user.json
 
 # Python
 __pycache__/

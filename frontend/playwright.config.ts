@@ -10,8 +10,6 @@ export default defineConfig({
   ],
   use: {
     baseURL: "http://localhost:3000",
-    // Store auth state between tests
-    storageState: "tests/e2e/.auth/user.json",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
@@ -20,11 +18,14 @@ export default defineConfig({
     {
       name: "setup",
       testMatch: "**/auth.setup.ts",
-      use: { storageState: undefined },
     },
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Only load auth state after setup has created it
+        storageState: "tests/e2e/.auth/user.json",
+      },
       dependencies: ["setup"],
     },
   ],

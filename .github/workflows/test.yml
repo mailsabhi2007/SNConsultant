@@ -42,8 +42,9 @@ jobs:
                  -v
         env:
           # Fake keys so the app initialises without errors
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'sk-test-placeholder' }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'sk-ant-test-placeholder' }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-placeholder' }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY || 'tvly-test-placeholder' }}
 
       - name: Upload API test report
         if: always()

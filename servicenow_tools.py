@@ -39,10 +39,21 @@ def get_public_knowledge_tool(user_id: Optional[str] = None):
     # Get API key
     api_key = os.getenv("TAVILY_API_KEY")
     if not api_key:
-        raise ValueError(
-            "TAVILY_API_KEY environment variable is not set. "
-            "Please add it to your .env file."
+        # Return a no-op tool so the app starts without Tavily configured.
+        # The agent will simply skip public doc search if this tool is called.
+        from langchain_core.tools import tool as _tool
+
+        @_tool
+        def consult_public_docs(query: str) -> str:
+            """Search official ServiceNow documentation (unavailable — TAVILY_API_KEY not set)."""
+            return "Public documentation search is unavailable: TAVILY_API_KEY is not configured."
+
+        warnings.warn(
+            "TAVILY_API_KEY is not set — public documentation search will be unavailable.",
+            RuntimeWarning,
+            stacklevel=2,
         )
+        return consult_public_docs
 
     # Try to import and use tavily_config
     try:

@@ -17,6 +17,7 @@ class ChatResponse(BaseModel):
     judge_result: Optional[Dict[str, Any]] = None
     credits_used: Optional[int] = None
     credits_remaining: Optional[int] = None
+    current_agent: Optional[str] = None
 
 
 class ConversationSummary(BaseModel):

@@ -133,10 +133,20 @@ async def orchestrator_node(state: MultiAgentState) -> Dict[str, Any]:
     from database import get_agent_prompt
     system_prompt = get_agent_prompt("orchestrator") or ORCHESTRATOR_SYSTEM_PROMPT
 
+    # Build conversation context (last 8 messages) so routing is aware of prior turns
+    context_lines = []
+    for msg in messages[-8:]:
+        if isinstance(msg, HumanMessage):
+            context_lines.append(f"User: {msg.content[:300]}")
+        elif hasattr(msg, "content"):
+            text = msg.content if isinstance(msg.content, str) else str(msg.content)
+            context_lines.append(f"Assistant: {text[:300]}")
+    conversation_context = "\n".join(context_lines)
+
     # Prepare routing prompt
     routing_messages = [
         SystemMessage(content=system_prompt),
-        HumanMessage(content=f"Route this query to the appropriate agent:\n\n{user_query}")
+        HumanMessage(content=f"Route this conversation to the appropriate agent.\n\nConversation so far:\n{conversation_context}\n\nLatest user message: {user_query}")
     ]
 
     try:

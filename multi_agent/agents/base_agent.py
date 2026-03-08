@@ -26,9 +26,20 @@ def prepare_agent_messages(state: MultiAgentState, agent_name: str, system_promp
     # Add system prompt
     messages.append(SystemMessage(content=system_prompt))
 
-    # Add handoff context if this is a handoff
+    # Add handoff context if this is a handoff — formatted so the receiving agent cannot miss it
     if state.get("handoff_context_summary"):
-        messages.append(SystemMessage(content=f"\n{state['handoff_context_summary']}"))
+        from_agent = state.get("previous_agent", "another agent")
+        handoff_block = (
+            f"\n{'='*60}\n"
+            f"HANDOFF FROM: {from_agent.upper()}\n"
+            f"{'='*60}\n"
+            f"{state['handoff_context_summary']}\n"
+            f"{'='*60}\n"
+            f"REQUIRED: Begin your response by explicitly acknowledging the above context "
+            f"in 1-2 sentences before proceeding. Do NOT ignore this handoff summary.\n"
+            f"{'='*60}\n"
+        )
+        messages.append(SystemMessage(content=handoff_block))
 
     # Add conversation messages
     messages.extend(state["messages"])

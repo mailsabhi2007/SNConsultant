@@ -1,6 +1,6 @@
 """Base utilities for all specialized agents."""
 from typing import List, Dict, Any
-from langchain_core.messages import BaseMessage, SystemMessage, AIMessage
+from langchain_core.messages import BaseMessage, SystemMessage, AIMessage, ToolMessage
 from multi_agent.state import MultiAgentState
 from multi_agent.utils import (
     extract_agent_context,
@@ -8,6 +8,44 @@ from multi_agent.utils import (
     has_exceeded_step_limit,
     increment_agent_steps
 )
+
+
+def sanitize_messages(messages: List[BaseMessage]) -> List[BaseMessage]:
+    """Remove orphaned tool_use blocks that have no corresponding tool_result.
+
+    The Anthropic API requires every tool_use block to be immediately followed
+    by a tool_result block. During agent handoffs the graph skips the ToolNode,
+    leaving the request_handoff tool_use without a result — causing a 400 error.
+    This function drops such orphaned AIMessages (keeping their text content if
+    any) so the receiving agent gets a clean message history.
+    """
+    sanitized = []
+    i = 0
+    while i < len(messages):
+        msg = messages[i]
+        if isinstance(msg, AIMessage) and getattr(msg, "tool_calls", None):
+            # Check whether the next message(s) are ToolMessages covering all tool_call ids
+            tool_ids = {tc["id"] for tc in msg.tool_calls if "id" in tc}
+            j = i + 1
+            covered_ids = set()
+            while j < len(messages) and isinstance(messages[j], ToolMessage):
+                if hasattr(messages[j], "tool_call_id"):
+                    covered_ids.add(messages[j].tool_call_id)
+                j += 1
+
+            if tool_ids and tool_ids != covered_ids:
+                # Orphaned tool_use — keep text content only (if present)
+                text = msg.content if isinstance(msg.content, str) else ""
+                if text.strip():
+                    sanitized.append(AIMessage(content=text))
+                # Skip the partial tool results too
+                i = j
+                continue
+
+        sanitized.append(msg)
+        i += 1
+
+    return sanitized
 
 
 def prepare_agent_messages(state: MultiAgentState, agent_name: str, system_prompt: str) -> List[BaseMessage]:
@@ -41,8 +79,9 @@ def prepare_agent_messages(state: MultiAgentState, agent_name: str, system_promp
         )
         messages.append(SystemMessage(content=handoff_block))
 
-    # Add conversation messages
-    messages.extend(state["messages"])
+    # Add conversation messages — strip orphaned tool_use blocks first
+    # to avoid Anthropic 400 "tool_use without tool_result" errors on handoffs
+    messages.extend(sanitize_messages(list(state["messages"])))
 
     return messages
 

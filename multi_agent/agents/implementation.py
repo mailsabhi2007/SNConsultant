@@ -147,7 +147,10 @@ async def implementation_node(state: MultiAgentState) -> Dict[str, Any]:
         return {
             "messages": [AIMessage(content=error_message)],
             "current_agent": agent_name,
-            "agent_step_counts": increment_agent_steps(state, agent_name)
+            "agent_step_counts": increment_agent_steps(state, agent_name),
+            "handoff_requested": False,
+            "handoff_target": None,
+            "handoff_reason": None,
         }
 
     # Get user_id from state
@@ -178,12 +181,16 @@ async def implementation_node(state: MultiAgentState) -> Dict[str, Any]:
         # If still not confirmed, ask for permission
         if not user_confirmed:
             permission_message = AIMessage(
-                content="I need your permission to connect to your live ServiceNow instance to check the actual configuration, logs, or data. Would you like me to proceed? Please reply with 'yes' or 'please check' to confirm."
+                content="To investigate, I need to connect to your live ServiceNow instance. Shall I proceed? Please reply with 'yes' or 'please check' to confirm."
             )
             return {
                 "messages": [permission_message],
                 "current_agent": agent_name,
-                "agent_step_counts": increment_agent_steps(state, agent_name)
+                "agent_step_counts": increment_agent_steps(state, agent_name),
+                # Reset handoff state so stale flags don't cause KeyError on next routing
+                "handoff_requested": False,
+                "handoff_target": None,
+                "handoff_reason": None,
             }
 
     # Create agent

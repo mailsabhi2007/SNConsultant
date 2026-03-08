@@ -217,7 +217,10 @@ async def consultant_node(state: MultiAgentState) -> Dict[str, Any]:
         return {
             "messages": [AIMessage(content=error_message)],
             "current_agent": agent_name,
-            "agent_step_counts": increment_agent_steps(state, agent_name)
+            "agent_step_counts": increment_agent_steps(state, agent_name),
+            "handoff_requested": False,
+            "handoff_target": None,
+            "handoff_reason": None,
         }
 
     # Get user_id from state

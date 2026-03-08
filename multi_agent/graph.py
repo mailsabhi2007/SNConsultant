@@ -43,9 +43,12 @@ def agent_should_continue(state: MultiAgentState) -> Literal["tools", "consultan
         handoff_history = state.get("handoff_history", [])
         from_agent = current_agent
 
+        # Prevent self-handoff (stale state from prior node)
+        if handoff_target == current_agent:
+            return "end"
+
         # Check for circular handoff
         if detect_circular_handoff(handoff_history, from_agent, handoff_target):
-            # Prevent circular handoff - end with error message
             error_msg = AIMessage(
                 content="I've detected a circular handoff pattern. Let me provide you with what we've discovered so far rather than continuing to pass between agents."
             )
